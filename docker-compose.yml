@@ -1,0 +1,279 @@
+###############################################################################
+# HACT Clinical Trial Management System — Docker Compose
+# Target: Developer machine (10 GB RAM, 120 GB SSD)
+# Total container memory: ~4.4 GB (leaves ~5.6 GB for host OS + future services)
+###############################################################################
+
+services:
+  # ---------------------------------------------------------------------------
+  # NGINX Reverse Proxy
+  # Routes: /api/ → django, /admin/ → django, /auth/ → keycloak
+  # ---------------------------------------------------------------------------
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: hact-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - static_files:/var/www/static:ro
+      - media_files:/var/www/media:ro
+    depends_on:
+      django-api:
+        condition: service_healthy
+    networks:
+      - hact-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: "0.25"
+        reservations:
+          memory: 64M
+
+  # ---------------------------------------------------------------------------
+  # Django API Backend (Gunicorn)
+  # ---------------------------------------------------------------------------
+  django-api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: hact-django-api
+    command: >
+      gunicorn hact_ctms.wsgi:application
+      --bind 0.0.0.0:8000
+      --workers 3
+      --timeout 120
+      --access-logfile -
+      --error-logfile -
+    volumes:
+      - ./backend:/app
+      - static_files:/app/staticfiles
+      - media_files:/app/media
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health/')"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    networks:
+      - hact-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.0"
+        reservations:
+          memory: 512M
+
+  # ---------------------------------------------------------------------------
+  # Celery Worker — Async task processing
+  # ---------------------------------------------------------------------------
+  celery-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: hact-celery-worker
+    command: >
+      celery -A hact_ctms worker
+      --loglevel=info
+      --concurrency=2
+      --max-tasks-per-child=100
+    volumes:
+      - ./backend:/app
+    env_file:
+      - .env
+    depends_on:
+      django-api:
+        condition: service_healthy
+    networks:
+      - hact-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
+        reservations:
+          memory: 256M
+
+  # ---------------------------------------------------------------------------
+  # Celery Beat — Scheduled task triggers
+  # ---------------------------------------------------------------------------
+  celery-beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: hact-celery-beat
+    command: >
+      celery -A hact_ctms beat
+      --loglevel=info
+      --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    volumes:
+      - ./backend:/app
+    env_file:
+      - .env
+    depends_on:
+      django-api:
+        condition: service_healthy
+    networks:
+      - hact-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.25"
+        reservations:
+          memory: 128M
+
+  # ---------------------------------------------------------------------------
+  # Redis — Cache + Celery message broker
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: hact-redis
+    command: redis-server --maxmemory 200mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - hact-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.25"
+        reservations:
+          memory: 128M
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL — HACT Custom Database
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: hact-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-hact_ctms_db}
+      POSTGRES_USER: ${POSTGRES_USER:-hact_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me-postgres-password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-hact_admin} -d ${POSTGRES_DB:-hact_ctms_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - hact-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.0"
+        reservations:
+          memory: 512M
+
+  # ---------------------------------------------------------------------------
+  # Keycloak — Identity & Access Management (SSO / OIDC / 2FA)
+  # ---------------------------------------------------------------------------
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0
+    container_name: hact-keycloak
+    command: start-dev
+    environment:
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-change-me-keycloak-admin-password}
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/${KC_DB_NAME:-keycloak_db}
+      KC_DB_USERNAME: ${KC_DB_USER:-keycloak_admin}
+      KC_DB_PASSWORD: ${KC_DB_PASSWORD:-change-me-keycloak-db-password}
+      KC_PROXY_HEADERS: xforwarded
+      KC_HTTP_RELATIVE_PATH: /auth
+      KC_HEALTH_ENABLED: "true"
+      JAVA_OPTS_APPEND: "-Xms256m -Xmx512m"
+    depends_on:
+      keycloak-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/8080 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 90s
+    networks:
+      - hact-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+          cpus: "0.5"
+        reservations:
+          memory: 384M
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL — Keycloak Database (separate instance for isolation)
+  # ---------------------------------------------------------------------------
+  keycloak-db:
+    image: postgres:16-alpine
+    container_name: hact-keycloak-db
+    environment:
+      POSTGRES_DB: ${KC_DB_NAME:-keycloak_db}
+      POSTGRES_USER: ${KC_DB_USER:-keycloak_admin}
+      POSTGRES_PASSWORD: ${KC_DB_PASSWORD:-change-me-keycloak-db-password}
+    volumes:
+      - keycloak_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${KC_DB_USER:-keycloak_admin} -d ${KC_DB_NAME:-keycloak_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - hact-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
+        reservations:
+          memory: 256M
+
+# =============================================================================
+# Volumes
+# =============================================================================
+volumes:
+  postgres_data:
+    name: hact-postgres-data
+  keycloak_db_data:
+    name: hact-keycloak-db-data
+  redis_data:
+    name: hact-redis-data
+  static_files:
+    name: hact-static-files
+  media_files:
+    name: hact-media-files
+
+# =============================================================================
+# Networks
+# =============================================================================
+networks:
+  hact-network:
+    name: hact-network
+    driver: bridge
