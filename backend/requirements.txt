@@ -12,6 +12,9 @@ psycopg2-binary==2.9.10
 
 # --- Authentication (Keycloak OIDC) ---
 mozilla-django-oidc==4.0.1
+PyJWT[crypto]==2.9.0
+cryptography==43.0.3
+requests>=2.31.0
 
 # --- Async Task Queue ---
 celery==5.4.0

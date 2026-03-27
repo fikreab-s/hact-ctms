@@ -1,9 +1,10 @@
-"""Accounts URL routes — auth schema (DRF Router)."""
+"""Accounts URL routes — auth schema (DRF Router + Auth endpoints)."""
 
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
 from . import views
+from . import views_auth
 
 app_name = "accounts"
 
@@ -16,4 +17,7 @@ router.register(r"external-identities", views.ExternalSystemIdentityViewSet)
 
 urlpatterns = [
     path("", include(router.urls)),
+    # Auth endpoints
+    path("auth/me/", views_auth.me, name="auth-me"),
+    path("auth/status/", views_auth.auth_status, name="auth-status"),
 ]

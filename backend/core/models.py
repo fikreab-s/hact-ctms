@@ -42,3 +42,16 @@ class TimeStampedModel(models.Model):
     class Meta:
         abstract = True
         ordering = ["-created_at"]
+
+    def save(self, *args, **kwargs):
+        """Auto-set created_by/updated_by from request context if not set."""
+        from core.middleware import get_current_user
+
+        user = get_current_user()
+        if user:
+            if not self.pk and not self.created_by_id:
+                self.created_by = user
+            self.updated_by = user
+
+        super().save(*args, **kwargs)
+

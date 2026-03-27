@@ -99,6 +99,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "core.middleware.AuditMiddleware",  # Must be AFTER AuthenticationMiddleware
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -201,6 +202,10 @@ OIDC_OP_JWKS_ENDPOINT = env(
     "OIDC_OP_JWKS_ENDPOINT",
     default="http://keycloak:8080/auth/realms/hact/protocol/openid-connect/certs",
 )
+OIDC_OP_ISSUER = env(
+    "OIDC_OP_ISSUER",
+    default="http://keycloak:8080/auth/realms/hact",
+)
 
 # =============================================================================
 # Django REST Framework
@@ -208,9 +213,8 @@ OIDC_OP_JWKS_ENDPOINT = env(
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
+        "core.auth_backend.KeycloakJWTAuthentication",
         "rest_framework.authentication.SessionAuthentication",
-        "rest_framework.authentication.BasicAuthentication",
-        # "mozilla_django_oidc.contrib.drf.OIDCAuthentication",  # Enable after Keycloak
     ],
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",

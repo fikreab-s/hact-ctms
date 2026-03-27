@@ -47,6 +47,8 @@ services:
       --timeout 120
       --access-logfile -
       --error-logfile -
+      --log-level debug
+      --capture-output
     volumes:
       - ./backend:/app
       - static_files:/app/staticfiles
