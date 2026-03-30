@@ -18,6 +18,7 @@ from drf_spectacular.views import (
     SpectacularRedocView,
     SpectacularSwaggerView,
 )
+from rest_framework.permissions import AllowAny
 
 
 def health_check(request):
@@ -42,17 +43,25 @@ urlpatterns = [
     path("api/health/", health_check, name="health-check"),
     path("api/health/detailed/", include("health_check.urls")),
     # -------------------------------------------------------------------------
-    # OpenAPI Schema & Documentation
+    # OpenAPI Schema & Documentation (public — no auth required)
     # -------------------------------------------------------------------------
-    path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
+    path(
+        "api/schema/",
+        SpectacularAPIView.as_view(permission_classes=[AllowAny]),
+        name="schema",
+    ),
     path(
         "api/schema/swagger/",
-        SpectacularSwaggerView.as_view(url_name="schema"),
+        SpectacularSwaggerView.as_view(
+            url_name="schema", permission_classes=[AllowAny]
+        ),
         name="swagger-ui",
     ),
     path(
         "api/schema/redoc/",
-        SpectacularRedocView.as_view(url_name="schema"),
+        SpectacularRedocView.as_view(
+            url_name="schema", permission_classes=[AllowAny]
+        ),
         name="redoc",
     ),
     # -------------------------------------------------------------------------

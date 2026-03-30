@@ -42,8 +42,9 @@ class Command(BaseCommand):
         self._assign_site_staff(users, sites)
         subjects = self._create_subjects(study, sites, admin_user)
         visits = self._create_visits(study, admin_user)
-        self._create_subject_visits(subjects, visits, admin_user)
-        self._create_forms(study, admin_user)
+        subject_visits = self._create_subject_visits(subjects, visits, admin_user)
+        forms = self._create_forms(study, admin_user)
+        self._create_form_instances(forms, subjects, subject_visits, users, admin_user)
         self._create_adverse_events(study, subjects, users, admin_user)
         self._create_lab_data(study, subjects, admin_user)
         self._create_ops_data(study, sites, admin_user)
@@ -257,22 +258,24 @@ class Command(BaseCommand):
     def _create_visits(self, study, admin_user):
         from clinical.models import Visit
 
+        # (name, order, day, window_before, window_after, is_scr, is_bl, is_fu)
         visit_data = [
-            ("Screening", 1, -14, True, False, False),
-            ("Baseline / Day 0", 2, 0, False, True, False),
-            ("Day 3", 3, 3, False, False, True),
-            ("Day 7", 4, 7, False, False, True),
-            ("Day 14", 5, 14, False, False, True),
-            ("Day 28", 6, 28, False, False, True),
-            ("Day 42 (End of Study)", 7, 42, False, False, True),
+            ("Screening", 1, -14, 14, 0, True, False, False),
+            ("Baseline / Day 0", 2, 0, 0, 1, False, True, False),
+            ("Day 3", 3, 3, 1, 1, False, False, True),
+            ("Day 7", 4, 7, 1, 1, False, False, True),
+            ("Day 14", 5, 14, 2, 2, False, False, True),
+            ("Day 28", 6, 28, 3, 3, False, False, True),
+            ("Day 42 (End of Study)", 7, 42, 3, 3, False, False, True),
         ]
 
         visits = []
-        for name, order, day, is_scr, is_bl, is_fu in visit_data:
+        for name, order, day, w_before, w_after, is_scr, is_bl, is_fu in visit_data:
             visit, _ = Visit.objects.get_or_create(
                 visit_name=name, study=study,
                 defaults={
                     "visit_order": order, "planned_day": day,
+                    "window_before": w_before, "window_after": w_after,
                     "is_screening": is_scr, "is_baseline": is_bl,
                     "is_follow_up": is_fu,
                     "created_by": admin_user, "updated_by": admin_user,
@@ -287,10 +290,11 @@ class Command(BaseCommand):
         from clinical.models import SubjectVisit
 
         count = 0
+        subject_visits = []
         enrolled = [s for s in subjects if s.status == "enrolled"]
         for subj in enrolled:
             for visit in visits[:4]:
-                SubjectVisit.objects.get_or_create(
+                sv, _ = SubjectVisit.objects.get_or_create(
                     subject=subj, visit=visit,
                     defaults={
                         "scheduled_date": date(2026, 3, 1) + timedelta(days=max(visit.planned_day, 0)),
@@ -299,33 +303,36 @@ class Command(BaseCommand):
                         "created_by": admin_user, "updated_by": admin_user,
                     },
                 )
+                subject_visits.append(sv)
                 count += 1
 
         self.stdout.write(self.style.SUCCESS(f"  ✓ {count} subject visits created"))
+        return subject_visits
 
     def _create_forms(self, study, admin_user):
         from clinical.models import Form, Item
 
         form_data = [
             ("Demographics", "1.0", [
-                ("weight_kg", "Weight (kg)", "decimal", True),
-                ("height_cm", "Height (cm)", "decimal", True),
+                ("weight_kg", "Weight (kg)", "number", True, None),
+                ("height_cm", "Height (cm)", "number", True, None),
+                ("sex", "Sex", "dropdown", True, [{"value": "M", "label": "Male"}, {"value": "F", "label": "Female"}]),
             ]),
             ("Vital Signs", "1.0", [
-                ("systolic_bp", "Systolic BP (mmHg)", "integer", True),
-                ("diastolic_bp", "Diastolic BP (mmHg)", "integer", True),
-                ("heart_rate", "Heart Rate (bpm)", "integer", True),
-                ("temperature", "Temperature (°C)", "decimal", True),
+                ("systolic_bp", "Systolic BP (mmHg)", "number", True, None),
+                ("diastolic_bp", "Diastolic BP (mmHg)", "number", True, None),
+                ("heart_rate", "Heart Rate (bpm)", "number", True, None),
+                ("temperature", "Temperature (°C)", "number", True, None),
             ]),
             ("Medical History", "1.0", [
-                ("condition", "Condition/Diagnosis", "text", True),
-                ("ongoing", "Currently Ongoing?", "boolean", True),
+                ("condition", "Condition/Diagnosis", "text", True, None),
+                ("ongoing", "Currently Ongoing?", "radio", True, [{"value": "yes", "label": "Yes"}, {"value": "no", "label": "No"}]),
             ]),
             ("Adverse Event Form", "1.0", [
-                ("ae_term", "AE Term", "text", True),
-                ("onset_date", "Onset Date", "date", True),
-                ("severity", "Severity", "select", True),
-                ("outcome", "Outcome", "select", True),
+                ("ae_term", "AE Term", "text", True, None),
+                ("onset_date", "Onset Date", "date", True, None),
+                ("severity", "Severity", "dropdown", True, [{"value": "mild", "label": "Mild"}, {"value": "moderate", "label": "Moderate"}, {"value": "severe", "label": "Severe"}]),
+                ("outcome", "Outcome", "dropdown", True, [{"value": "recovered", "label": "Recovered"}, {"value": "recovering", "label": "Recovering"}, {"value": "not_recovered", "label": "Not Recovered"}]),
             ]),
         ]
 
@@ -339,17 +346,131 @@ class Command(BaseCommand):
                 },
             )
             forms.append(form)
-            for order, (field_name, label, field_type, required) in enumerate(items, 1):
+            for order, (field_name, label, field_type, required, options) in enumerate(items, 1):
                 Item.objects.get_or_create(
                     form=form, field_name=field_name,
                     defaults={
                         "field_label": label, "field_type": field_type,
                         "required": required, "order": order,
+                        "options": options,
                         "created_by": admin_user, "updated_by": admin_user,
                     },
                 )
 
         self.stdout.write(self.style.SUCCESS(f"  ✓ {len(forms)} forms with items created"))
+        return forms
+
+    def _create_form_instances(self, forms, subjects, subject_visits, users, admin_user):
+        """Create FormInstances, ItemResponses, and Queries for testing."""
+        from clinical.models import FormInstance, ItemResponse, Query
+
+        enrolled = [s for s in subjects if s.status == "enrolled"]
+        if not enrolled or not subject_visits:
+            return
+
+        demographics_form = forms[0]  # Demographics
+        vitals_form = forms[1]  # Vital Signs
+        coord_user = users.get("site.coordinator1", admin_user)
+        dm_user = users.get("data.manager", admin_user)
+
+        fi_count = 0
+        ir_count = 0
+        query_count = 0
+
+        # Create form instances for first 3 enrolled subjects
+        for subj in enrolled[:3]:
+            # Get this subject's baseline visit
+            baseline_sv = next(
+                (sv for sv in subject_visits
+                 if sv.subject_id == subj.id and sv.visit.is_baseline),
+                None,
+            )
+            if not baseline_sv:
+                continue
+
+            # --- Demographics form (submitted, fully filled) ---
+            demo_fi, created = FormInstance.objects.get_or_create(
+                form=demographics_form, subject=subj, subject_visit=baseline_sv,
+                defaults={
+                    "status": "submitted",
+                    "submitted_at": baseline_sv.actual_date,
+                    "created_by": admin_user, "updated_by": admin_user,
+                },
+            )
+            if created:
+                fi_count += 1
+                demo_items = demographics_form.items.all().order_by("order")
+                demo_values = ["65.5", "168", "M"]
+                for item, val in zip(demo_items, demo_values):
+                    ItemResponse.objects.get_or_create(
+                        form_instance=demo_fi, item=item,
+                        defaults={"value": val, "updated_by": coord_user},
+                    )
+                    ir_count += 1
+
+            # --- Vital Signs form (draft, partially filled = triggers queries) ---
+            vitals_fi, created = FormInstance.objects.get_or_create(
+                form=vitals_form, subject=subj, subject_visit=baseline_sv,
+                defaults={
+                    "status": "draft",
+                    "created_by": admin_user, "updated_by": admin_user,
+                },
+            )
+            if created:
+                fi_count += 1
+                vitals_items = list(vitals_form.items.all().order_by("order"))
+                # Fill only first 2 of 4 required fields
+                partial_values = ["120", "80"]
+                for item, val in zip(vitals_items[:2], partial_values):
+                    resp, _ = ItemResponse.objects.get_or_create(
+                        form_instance=vitals_fi, item=item,
+                        defaults={"value": val, "updated_by": coord_user},
+                    )
+                    ir_count += 1
+
+                # Create queries for missing fields on first subject only
+                if subj == enrolled[0]:
+                    for item in vitals_items[2:]:
+                        # Create empty response first
+                        resp, _ = ItemResponse.objects.get_or_create(
+                            form_instance=vitals_fi, item=item,
+                            defaults={"value": "", "updated_by": coord_user},
+                        )
+                        Query.objects.get_or_create(
+                            item_response=resp,
+                            query_text=f"Missing required field: {item.field_label}",
+                            defaults={
+                                "status": "open",
+                                "raised_by": dm_user,
+                                "created_by": admin_user, "updated_by": admin_user,
+                            },
+                        )
+                        query_count += 1
+
+        # Create one answered query (on subject 2) for variety
+        if len(enrolled) > 1:
+            subj2_vitals = FormInstance.objects.filter(
+                form=vitals_form, subject=enrolled[1]
+            ).first()
+            if subj2_vitals:
+                item = vitals_form.items.first()
+                resp = subj2_vitals.responses.filter(item=item).first()
+                if resp:
+                    Query.objects.get_or_create(
+                        item_response=resp,
+                        query_text="Please verify systolic BP value — appears unusually low.",
+                        defaults={
+                            "status": "answered",
+                            "response_text": "Value confirmed correct per source document.",
+                            "raised_by": dm_user,
+                            "created_by": admin_user, "updated_by": admin_user,
+                        },
+                    )
+                    query_count += 1
+
+        self.stdout.write(self.style.SUCCESS(
+            f"  ✓ {fi_count} form instances, {ir_count} responses, {query_count} queries created"
+        ))
 
     def _create_adverse_events(self, study, subjects, users, admin_user):
         from safety.models import AdverseEvent
