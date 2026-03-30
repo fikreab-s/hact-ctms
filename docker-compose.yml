@@ -169,6 +169,8 @@ services:
   postgres:
     image: postgres:16-alpine
     container_name: hact-postgres
+    ports:
+      - "127.0.0.1:5433:5432"    # Exposed for pgAdmin/DBeaver (localhost only, mapped to 5433)
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-hact_ctms_db}
       POSTGRES_USER: ${POSTGRES_USER:-hact_admin}

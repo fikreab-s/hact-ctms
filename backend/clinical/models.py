@@ -193,6 +193,14 @@ class Visit(TimeStampedModel):
         default=0,
         help_text="Planned day relative to baseline (Day 0).",
     )
+    window_before = models.PositiveIntegerField(
+        default=2,
+        help_text="Days before planned_day that the visit is allowed.",
+    )
+    window_after = models.PositiveIntegerField(
+        default=2,
+        help_text="Days after planned_day that the visit is allowed.",
+    )
     is_screening = models.BooleanField(default=False)
     is_baseline = models.BooleanField(default=False)
     is_follow_up = models.BooleanField(default=False)
@@ -214,6 +222,22 @@ class Visit(TimeStampedModel):
 
     def __str__(self):
         return f"{self.visit_name} (Day {self.planned_day})"
+
+    def get_window_range(self, baseline_date):
+        """Return (earliest_date, latest_date) for this visit window.
+
+        Args:
+            baseline_date: The subject's baseline/enrollment date (Day 0).
+
+        Returns:
+            Tuple of (earliest_date, latest_date) as datetime.date objects.
+        """
+        from datetime import timedelta
+
+        target_date = baseline_date + timedelta(days=self.planned_day)
+        earliest = target_date - timedelta(days=self.window_before)
+        latest = target_date + timedelta(days=self.window_after)
+        return earliest, latest
 
 
 # =============================================================================
