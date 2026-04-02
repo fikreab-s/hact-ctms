@@ -1,0 +1,89 @@
+@import "tailwindcss";
+
+/* =============================================================================
+   HACT CTMS — Design System (Tailwind CSS v4 Theme)
+   Clinical Enterprise Palette: Indigo / Emerald / Rose / Slate
+   ============================================================================= */
+
+@theme {
+  /* ── Brand Colors ── */
+  --color-primary-50: #EEF2FF;
+  --color-primary-100: #E0E7FF;
+  --color-primary-200: #C7D2FE;
+  --color-primary-300: #A5B4FC;
+  --color-primary-400: #818CF8;
+  --color-primary-500: #6366F1;
+  --color-primary-600: #4F46E5;
+  --color-primary-700: #4338CA;
+  --color-primary-800: #3730A3;
+  --color-primary-900: #312E81;
+
+  /* ── Semantic Colors ── */
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-danger: #F43F5E;
+  --color-info: #0EA5E9;
+
+  /* ── Sidebar ── */
+  --color-sidebar: #0F172A;
+  --color-sidebar-hover: #1E293B;
+  --color-sidebar-active: #4F46E5;
+  --color-sidebar-text: #94A3B8;
+  --color-sidebar-text-active: #FFFFFF;
+
+  /* ── Surface ── */
+  --color-surface: #F8FAFC;
+  --color-card: #FFFFFF;
+  --color-card-hover: #F1F5F9;
+  --color-border: #E2E8F0;
+  --color-border-strong: #CBD5E1;
+
+  /* ── Typography ── */
+  --font-family-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+
+  /* ── Spacing: Sidebar width ── */
+  --spacing-sidebar: 16rem;
+}
+
+/* ── Global Resets ── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #CBD5E1 transparent;
+}
+
+body {
+  font-family: var(--font-family-sans);
+  background-color: var(--color-surface);
+  color: #1E293B;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Status Badge Colors (used by StatusBadge component) ── */
+@utility badge-active    { @apply bg-emerald-100 text-emerald-700; }
+@utility badge-planning  { @apply bg-sky-100 text-sky-700; }
+@utility badge-locked    { @apply bg-amber-100 text-amber-700; }
+@utility badge-archived  { @apply bg-slate-100 text-slate-600; }
+@utility badge-enrolled  { @apply bg-emerald-100 text-emerald-700; }
+@utility badge-screened  { @apply bg-sky-100 text-sky-700; }
+@utility badge-completed { @apply bg-indigo-100 text-indigo-700; }
+@utility badge-discontinued { @apply bg-rose-100 text-rose-700; }
+@utility badge-screen_failed { @apply bg-rose-100 text-rose-700; }
+@utility badge-open      { @apply bg-rose-100 text-rose-700; }
+@utility badge-answered  { @apply bg-amber-100 text-amber-700; }
+@utility badge-closed    { @apply bg-slate-100 text-slate-600; }
+@utility badge-draft     { @apply bg-slate-100 text-slate-600; }
+@utility badge-submitted { @apply bg-sky-100 text-sky-700; }
+@utility badge-signed    { @apply bg-indigo-100 text-indigo-700; }
+
+/* ── Card hover animation ── */
+@utility card-hover {
+  @apply transition-all duration-200 hover:shadow-md hover:border-primary-300;
+}
+
+/* ── Stat card gradient backgrounds ── */
+@utility stat-primary { @apply bg-gradient-to-br from-primary-500 to-primary-700 text-white; }
+@utility stat-success { @apply bg-gradient-to-br from-emerald-500 to-emerald-700 text-white; }
+@utility stat-warning { @apply bg-gradient-to-br from-amber-500 to-amber-700 text-white; }
+@utility stat-danger  { @apply bg-gradient-to-br from-rose-500 to-rose-700 text-white; }
+@utility stat-info    { @apply bg-gradient-to-br from-sky-500 to-sky-700 text-white; }

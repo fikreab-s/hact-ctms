@@ -238,16 +238,24 @@ class KeycloakJWTAuthentication(BaseAuthentication):
             )
 
             # Manual audience verification — Keycloak access tokens
-            # typically have aud="account" and azp="hact-ctms"
+            # typically have aud="account" and azp=<client_id>
             token_aud = decoded.get("aud", "")
             token_azp = decoded.get("azp", "")
             client_id = settings.OIDC_RP_CLIENT_ID
 
-            # Accept if aud matches OR azp matches
+            # Accept tokens issued by either the confidential backend client
+            # or the public frontend SPA client (two-client architecture).
+            # Both live in the same Keycloak realm and use the same signing keys.
+            accepted_clients = {
+                client_id,                               # "hact-ctms" (Django)
+                getattr(settings, "OIDC_SPA_CLIENT_ID",  # "hact-ctms-frontend" (React)
+                        "hact-ctms-frontend"),
+            }
+
             aud_list = token_aud if isinstance(token_aud, list) else [token_aud]
-            if client_id not in aud_list and token_azp != client_id:
+            if not (accepted_clients & set(aud_list)) and token_azp not in accepted_clients:
                 raise AuthenticationFailed(
-                    f"Token not issued for client '{client_id}'. "
+                    f"Token not issued for an accepted client. "
                     f"aud={token_aud}, azp={token_azp}"
                 )
 
