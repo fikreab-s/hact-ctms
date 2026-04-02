@@ -68,6 +68,11 @@ class StudyViewSet(AuditCreateMixin, viewsets.ModelViewSet):
 
         POST /api/v1/clinical/studies/{id}/transition/
         Body: {"status": "active", "reason": "optional"}
+
+        When locking, automatically:
+        1. Generates a comprehensive data quality report
+        2. Creates a frozen dataset snapshot (CSV ZIP)
+        3. Locks all form instances (draft/submitted → locked)
         """
         study = self.get_object()
         serializer = StudyTransitionSerializer(
@@ -77,13 +82,49 @@ class StudyViewSet(AuditCreateMixin, viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
 
         old_status = study.status
-        study.status = serializer.validated_data["status"]
+        new_status = serializer.validated_data["status"]
+        study.status = new_status
         study.save(update_fields=["status", "updated_at"])
 
-        return Response({
+        response_data = {
             "detail": f"Study transitioned from '{old_status}' to '{study.status}'.",
             "study": StudyDetailSerializer(study).data,
-        })
+        }
+
+        # --- Lock-specific actions ---
+        if new_status == "locked":
+            # 1. Generate data quality report
+            from outputs.quality import generate_quality_report
+            from outputs.models import DataQualityReport
+
+            report_data = generate_quality_report(study, report_type="comprehensive")
+            quality_report = DataQualityReport.objects.create(
+                study=study,
+                report_type="query_status",
+                report_data=report_data,
+            )
+            response_data["quality_report_id"] = quality_report.id
+            response_data["quality_summary"] = report_data.get("summary", {})
+
+            # 2. Create frozen dataset snapshot
+            from outputs.services import export_study_zip
+
+            file_path, snapshot = export_study_zip(study, user=request.user)
+            snapshot.description = f"Database lock snapshot — {study.protocol_number}"
+            snapshot.save(update_fields=["description"])
+            response_data["snapshot_id"] = snapshot.id
+            response_data["snapshot_url"] = snapshot.file_url
+
+            # 3. Lock all form instances
+            from clinical.models import FormInstance
+
+            locked_count = FormInstance.objects.filter(
+                subject__study=study,
+                status__in=["draft", "submitted", "signed"],
+            ).update(status="locked")
+            response_data["form_instances_locked"] = locked_count
+
+        return Response(response_data)
 
 
 # =============================================================================

@@ -8,13 +8,13 @@ All requests need the `Authorization: Bearer <token>` header.
 **Request:**
 ```
 POST http://localhost/auth/realms/hact/protocol/openid-connect/token
-Content-Type: application/x-www-form-urlencoded
+Content-Type: application/x-www-form-urlencoded (form-data)
 
-grant_type=password
-client_id=hact-backend
-client_secret=mk108Hu1yat2GOkpm9EpFEIHyKiMX5Kh
-username=hact-user
-password=Test@2026!
+client_id:      hact-ctms
+client_secret:  mk108Hu1yat2GOkpm9EpFEIHyKiMX5Kh
+grant_type:     password
+username:       hact-user
+password:       hact-user
 ```
 
 Copy the `access_token` from the response. Use it as:
