@@ -34,8 +34,8 @@ COPY . .
 RUN mkdir -p /app/staticfiles /app/media && \
     chown -R hact:hact /app
 
-# Make entrypoint executable
-RUN chmod +x /app/entrypoint.sh
+# Make entrypoint executable (fix Windows CRLF line endings)
+RUN sed -i 's/\r$//' /app/entrypoint.sh && chmod +x /app/entrypoint.sh
 
 # Switch to non-root user
 USER hact
@@ -43,5 +43,6 @@ USER hact
 # Expose port
 EXPOSE 8000
 
-# Default entrypoint
-ENTRYPOINT ["/app/entrypoint.sh"]
+# Default entrypoint — use bash explicitly to avoid CRLF shebang issues
+ENTRYPOINT ["bash", "/app/entrypoint.sh"]
+

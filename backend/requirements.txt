@@ -36,3 +36,6 @@ django-environ==0.11.2
 
 # --- Health Checks ---
 django-health-check==3.18.3
+
+# --- PDF Generation (CIOMS forms) ---
+reportlab==4.2.5
