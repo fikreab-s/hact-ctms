@@ -208,13 +208,14 @@ class SubjectListSerializer(serializers.ModelSerializer):
     """Flat subject serializer for list view."""
 
     study_protocol = serializers.CharField(source="study.protocol_number", read_only=True)
+    study_status = serializers.CharField(source="study.status", read_only=True)
     site_code = serializers.CharField(source="site.site_code", read_only=True)
     site_name = serializers.CharField(source="site.name", read_only=True)
 
     class Meta:
         model = Subject
         fields = [
-            "id", "study", "site", "study_protocol", "site_code", "site_name",
+            "id", "study", "site", "study_protocol", "study_status", "site_code", "site_name",
             "subject_identifier", "screening_number",
             "enrollment_date", "completion_date",
             "status", "consent_signed_date",

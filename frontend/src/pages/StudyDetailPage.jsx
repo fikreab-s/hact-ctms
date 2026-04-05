@@ -60,6 +60,21 @@ export default function StudyDetailPage() {
         </div>
       </div>
 
+      {/* Locked/Archived Study Banner */}
+      {(study.status === 'locked' || study.status === 'archived') && (
+        <div className="flex items-center gap-3 px-5 py-3 bg-amber-50 border border-amber-200 rounded-xl text-sm">
+          <FiAlertTriangle className="w-5 h-5 text-amber-500 shrink-0" />
+          <div>
+            <span className="font-semibold text-amber-800">
+              {study.status === 'locked' ? 'Study Locked' : 'Study Archived'}
+            </span>
+            <span className="text-amber-700 ml-1">
+              — All data is frozen. No subjects, visits, or form data can be modified.
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Metrics */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="bg-card rounded-xl border border-border p-4">
