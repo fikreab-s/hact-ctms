@@ -4,9 +4,11 @@ import { useLabResults, useImportLabCSV } from '../api/queries'
 import StatusBadge from '../components/StatusBadge'
 import LoadingSpinner from '../components/LoadingSpinner'
 import EmptyState from '../components/EmptyState'
+import usePermission from '../auth/usePermission'
 import toast from 'react-hot-toast'
 
 export default function LabPage() {
+  const { can } = usePermission()
   const [page, setPage] = useState(1)
   const [flagFilter, setFlagFilter] = useState('')
   const fileRef = useRef(null)
@@ -39,11 +41,13 @@ export default function LabPage() {
           <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Laboratory Results</h1>
           <p className="text-sm text-slate-500 mt-0.5">{totalCount} lab results</p>
         </div>
-        <label className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-lg transition-colors cursor-pointer shadow-sm">
-          <FiUpload className="w-4 h-4" />
-          {importCSV.isPending ? 'Importing...' : 'Import CSV'}
-          <input type="file" accept=".csv" className="hidden" ref={fileRef} onChange={handleImport} disabled={importCSV.isPending} />
-        </label>
+        {can('IMPORT_LAB_CSV') && (
+          <label className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-lg transition-colors cursor-pointer shadow-sm">
+            <FiUpload className="w-4 h-4" />
+            {importCSV.isPending ? 'Importing...' : 'Import CSV'}
+            <input type="file" accept=".csv" className="hidden" ref={fileRef} onChange={handleImport} disabled={importCSV.isPending} />
+          </label>
+        )}
       </div>
 
       <div className="flex items-center gap-3">

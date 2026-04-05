@@ -4,9 +4,11 @@ import { useQueries as useQueriesData, useAnswerQuery, useCloseQuery } from '../
 import StatusBadge from '../components/StatusBadge'
 import LoadingSpinner from '../components/LoadingSpinner'
 import EmptyState from '../components/EmptyState'
+import usePermission from '../auth/usePermission'
 import toast from 'react-hot-toast'
 
 export default function QueriesPage() {
+  const { can } = usePermission()
   const [page, setPage] = useState(1)
   const [statusFilter, setStatusFilter] = useState('')
   const [answerModal, setAnswerModal] = useState(null)
@@ -86,10 +88,10 @@ export default function QueriesPage() {
                     <td className="px-5 py-3"><StatusBadge status={q.status} /></td>
                     <td className="px-5 py-3 text-slate-600">{q.raised_by_username || '—'}</td>
                     <td className="px-5 py-3 flex gap-2">
-                      {q.status === 'open' && (
+                      {can('ANSWER_QUERY') && q.status === 'open' && (
                         <button onClick={() => setAnswerModal(q)} className="text-xs text-primary-600 hover:text-primary-700 font-medium">Answer</button>
                       )}
-                      {(q.status === 'open' || q.status === 'answered') && (
+                      {can('CLOSE_QUERY') && (q.status === 'open' || q.status === 'answered') && (
                         <button onClick={() => handleClose(q)} className="text-xs text-slate-500 hover:text-slate-700 font-medium">Close</button>
                       )}
                     </td>
