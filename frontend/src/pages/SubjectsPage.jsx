@@ -89,8 +89,11 @@ export default function SubjectsPage() {
                     <td className="px-5 py-3 text-slate-600">{s.consent_signed_date || '—'}</td>
                     <td className="px-5 py-3 text-slate-600">{s.enrollment_date || '—'}</td>
                     <td className="px-5 py-3">
-                      {can('ENROLL_SUBJECT') && s.status === 'screened' && (
+                      {can('ENROLL_SUBJECT') && s.status === 'screened' && s.study_status === 'active' && (
                         <button onClick={() => setEnrollModal(s)} className="text-xs text-primary-600 hover:text-primary-700 font-medium">Enroll</button>
+                      )}
+                      {s.study_status === 'locked' && (
+                        <span className="text-xs text-slate-400 italic">Study locked</span>
                       )}
                     </td>
                   </tr>
