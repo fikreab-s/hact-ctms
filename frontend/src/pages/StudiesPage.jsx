@@ -5,9 +5,11 @@ import { useStudies, useCreateStudy } from '../api/queries'
 import StatusBadge from '../components/StatusBadge'
 import LoadingSpinner from '../components/LoadingSpinner'
 import EmptyState from '../components/EmptyState'
+import usePermission from '../auth/usePermission'
 import toast from 'react-hot-toast'
 
 export default function StudiesPage() {
+  const { can } = usePermission()
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
@@ -46,13 +48,15 @@ export default function StudiesPage() {
           <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Studies</h1>
           <p className="text-sm text-slate-500 mt-0.5">{totalCount} studies registered</p>
         </div>
-        <button
-          onClick={() => setShowCreate(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-lg transition-colors shadow-sm"
-          id="create-study-btn"
-        >
-          <FiPlus className="w-4 h-4" /> New Study
-        </button>
+        {can('CREATE_STUDY') && (
+          <button
+            onClick={() => setShowCreate(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-lg transition-colors shadow-sm"
+            id="create-study-btn"
+          >
+            <FiPlus className="w-4 h-4" /> New Study
+          </button>
+        )}
       </div>
 
       {/* Filters */}
@@ -135,8 +139,8 @@ export default function StudiesPage() {
         </div>
       )}
 
-      {/* Create Modal */}
-      {showCreate && (
+      {/* Create Modal — only rendered if user has permission */}
+      {can('CREATE_STUDY') && showCreate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setShowCreate(false)}>
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 p-6" onClick={e => e.stopPropagation()}>
             <h2 className="text-lg font-semibold text-slate-800 mb-5">Create New Study</h2>

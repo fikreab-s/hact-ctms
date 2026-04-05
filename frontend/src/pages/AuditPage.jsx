@@ -3,10 +3,12 @@ import { FiDownload } from 'react-icons/fi'
 import { useAuditLogs } from '../api/queries'
 import LoadingSpinner from '../components/LoadingSpinner'
 import EmptyState from '../components/EmptyState'
+import usePermission from '../auth/usePermission'
 import apiClient from '../api/client'
 import toast from 'react-hot-toast'
 
 export default function AuditPage() {
+  const { can } = usePermission()
   const [page, setPage] = useState(1)
   const [actionFilter, setActionFilter] = useState('')
 
@@ -66,9 +68,11 @@ export default function AuditPage() {
           <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Audit Trail</h1>
           <p className="text-sm text-slate-500 mt-0.5">{totalCount} audit log entries</p>
         </div>
-        <button onClick={handleExport} className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-lg transition-colors shadow-sm" id="export-audit-btn">
-          <FiDownload className="w-4 h-4" /> Export CSV
-        </button>
+        {can('EXPORT_AUDIT') && (
+          <button onClick={handleExport} className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-lg transition-colors shadow-sm" id="export-audit-btn">
+            <FiDownload className="w-4 h-4" /> Export CSV
+          </button>
+        )}
       </div>
 
       <div className="flex items-center gap-3">

@@ -4,9 +4,11 @@ import { useSubjects, useEnrollSubject } from '../api/queries'
 import StatusBadge from '../components/StatusBadge'
 import LoadingSpinner from '../components/LoadingSpinner'
 import EmptyState from '../components/EmptyState'
+import usePermission from '../auth/usePermission'
 import toast from 'react-hot-toast'
 
 export default function SubjectsPage() {
+  const { can } = usePermission()
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
@@ -87,7 +89,7 @@ export default function SubjectsPage() {
                     <td className="px-5 py-3 text-slate-600">{s.consent_signed_date || '—'}</td>
                     <td className="px-5 py-3 text-slate-600">{s.enrollment_date || '—'}</td>
                     <td className="px-5 py-3">
-                      {s.status === 'screened' && (
+                      {can('ENROLL_SUBJECT') && s.status === 'screened' && (
                         <button onClick={() => setEnrollModal(s)} className="text-xs text-primary-600 hover:text-primary-700 font-medium">Enroll</button>
                       )}
                     </td>

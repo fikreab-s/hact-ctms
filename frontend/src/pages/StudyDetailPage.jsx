@@ -3,10 +3,12 @@ import { FiArrowLeft, FiMapPin, FiUsers, FiCalendar, FiAlertTriangle } from 'rea
 import { useStudy, useSubjects, useTransitionStudy } from '../api/queries'
 import StatusBadge from '../components/StatusBadge'
 import LoadingSpinner from '../components/LoadingSpinner'
+import usePermission from '../auth/usePermission'
 import toast from 'react-hot-toast'
 
 export default function StudyDetailPage() {
   const { id } = useParams()
+  const { can } = usePermission()
   const { data: study, isLoading } = useStudy(id)
   const { data: subjectsData } = useSubjects({ study: id })
   const transition = useTransitionStudy()
@@ -45,7 +47,7 @@ export default function StudyDetailPage() {
           </div>
           <div className="flex items-center gap-3">
             <StatusBadge status={study.status} className="text-sm px-3 py-1" />
-            {nextStatus && (
+            {can('TRANSITION_STUDY') && nextStatus && (
               <button
                 onClick={handleTransition}
                 disabled={transition.isPending}

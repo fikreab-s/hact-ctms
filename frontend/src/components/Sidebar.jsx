@@ -2,41 +2,47 @@ import { NavLink } from 'react-router-dom'
 import {
   FiHome, FiFolder, FiUsers, FiMessageSquare,
   FiAlertTriangle, FiActivity, FiFileText,
-  FiShield, FiSettings,
+  FiShield,
 } from 'react-icons/fi'
 import useAuthStore from '../store/authStore'
+import { getSidebarRoutes } from '../auth/roleConfig'
 
-const navSections = [
-  {
-    title: 'Overview',
-    items: [
-      { to: '/', icon: FiHome, label: 'Dashboard' },
-    ],
-  },
-  {
-    title: 'Clinical',
-    items: [
-      { to: '/studies', icon: FiFolder, label: 'Studies' },
-      { to: '/subjects', icon: FiUsers, label: 'Subjects' },
-      { to: '/queries', icon: FiMessageSquare, label: 'Queries' },
-    ],
-  },
-  {
-    title: 'Safety & Lab',
-    items: [
-      { to: '/safety', icon: FiAlertTriangle, label: 'Safety' },
-      { to: '/lab', icon: FiActivity, label: 'Laboratory' },
-    ],
-  },
-  {
-    title: 'Admin',
-    items: [
-      { to: '/audit', icon: FiFileText, label: 'Audit Trail' },
-    ],
-  },
+// Full nav definition — entries will be filtered per role
+const ALL_NAV_ITEMS = [
+  { to: '/', icon: FiHome, label: 'Dashboard', section: 'Overview' },
+  { to: '/studies', icon: FiFolder, label: 'Studies', section: 'Clinical' },
+  { to: '/subjects', icon: FiUsers, label: 'Subjects', section: 'Clinical' },
+  { to: '/queries', icon: FiMessageSquare, label: 'Queries', section: 'Clinical' },
+  { to: '/safety', icon: FiAlertTriangle, label: 'Safety', section: 'Safety & Lab' },
+  { to: '/lab', icon: FiActivity, label: 'Laboratory', section: 'Safety & Lab' },
+  { to: '/audit', icon: FiFileText, label: 'Audit Trail', section: 'Admin' },
 ]
 
 export default function Sidebar() {
+  const { user, roles } = useAuthStore()
+  const isSuperuser = user?.is_superuser || false
+
+  // Get routes this user can access
+  const allowedRoutes = getSidebarRoutes(roles, isSuperuser)
+
+  // Filter nav items to only show allowed routes
+  const visibleItems = ALL_NAV_ITEMS.filter(item => allowedRoutes.includes(item.to))
+
+  // Group by section
+  const sections = []
+  const sectionMap = {}
+  for (const item of visibleItems) {
+    if (!sectionMap[item.section]) {
+      sectionMap[item.section] = []
+      sections.push(item.section)
+    }
+    sectionMap[item.section].push(item)
+  }
+
+  // Role display label
+  const primaryRole = roles[0] || 'user'
+  const roleLabel = primaryRole.replace(/_/g, ' ')
+
   return (
     <aside className="fixed left-0 top-0 bottom-0 w-64 bg-sidebar flex flex-col z-40">
       {/* Logo */}
@@ -50,15 +56,15 @@ export default function Sidebar() {
         </div>
       </div>
 
-      {/* Navigation */}
+      {/* Navigation — dynamically filtered by role */}
       <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-6">
-        {navSections.map((section) => (
-          <div key={section.title}>
+        {sections.map((sectionTitle) => (
+          <div key={sectionTitle}>
             <p className="px-3 mb-2 text-[11px] font-semibold uppercase tracking-wider text-sidebar-text/60">
-              {section.title}
+              {sectionTitle}
             </p>
             <ul className="space-y-0.5">
-              {section.items.map((item) => (
+              {sectionMap[sectionTitle].map((item) => (
                 <li key={item.to}>
                   <NavLink
                     to={item.to}
@@ -81,8 +87,12 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      {/* Bottom: version */}
-      <div className="p-4 border-t border-white/10">
+      {/* Bottom: role badge + version */}
+      <div className="p-4 border-t border-white/10 space-y-2">
+        <div className="flex items-center gap-2 px-2">
+          <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="text-[11px] text-sidebar-text capitalize">{roleLabel}</span>
+        </div>
         <p className="text-[11px] text-sidebar-text/50 text-center">v0.1.0 — Day 5 Build</p>
       </div>
     </aside>
