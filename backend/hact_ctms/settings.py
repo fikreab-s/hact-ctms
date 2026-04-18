@@ -83,10 +83,15 @@ HACT_APPS = [
     "audit.apps.AuditConfig",
 ]
 
+# External system integrations (additive — no existing code modified)
+INTEGRATION_APPS = [
+    "integrations.apps.IntegrationsConfig",
+]
+
 # Custom user model (extends AbstractUser with keycloak_id)
 AUTH_USER_MODEL = "accounts.User"
 
-INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + HACT_APPS
+INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + HACT_APPS + INTEGRATION_APPS
 
 # =============================================================================
 # Middleware

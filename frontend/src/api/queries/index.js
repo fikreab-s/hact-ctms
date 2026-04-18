@@ -54,6 +54,17 @@ export function useSites(params = {}) {
   })
 }
 
+export function useCreateSite() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data) => apiClient.post(API.SITES, data).then(r => r.data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['sites'] })
+      qc.invalidateQueries({ queryKey: ['studies'] })
+    },
+  })
+}
+
 // ── Subjects ──
 export function useSubjects(params = {}) {
   return useQuery({

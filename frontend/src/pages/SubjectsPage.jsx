@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { FiSearch } from 'react-icons/fi'
-import { useSubjects, useEnrollSubject } from '../api/queries'
+import { FiSearch, FiPlus } from 'react-icons/fi'
+import { useSubjects, useEnrollSubject, useCreateSubject, useStudies, useSites } from '../api/queries'
 import StatusBadge from '../components/StatusBadge'
 import LoadingSpinner from '../components/LoadingSpinner'
 import EmptyState from '../components/EmptyState'
@@ -13,9 +13,20 @@ export default function SubjectsPage() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [enrollModal, setEnrollModal] = useState(null)
+  const [showCreate, setShowCreate] = useState(false)
+  const [selectedStudy, setSelectedStudy] = useState('')
 
   const { data, isLoading } = useSubjects({ page, search: search || undefined, status: statusFilter || undefined })
   const enroll = useEnrollSubject()
+  const createSubject = useCreateSubject()
+
+  // For the create modal — need study and site dropdowns
+  const { data: studiesData } = useStudies({ page_size: 100 })
+  const { data: sitesData } = useSites(selectedStudy ? { study: selectedStudy } : {})
+
+  const studies = studiesData?.results || []
+  const activeStudies = studies.filter(s => s.status === 'active')
+  const availableSites = sitesData?.results || []
 
   const subjects = data?.results || []
   const totalCount = data?.count || 0
@@ -37,11 +48,44 @@ export default function SubjectsPage() {
     }
   }
 
+  const handleCreate = async (e) => {
+    e.preventDefault()
+    const form = new FormData(e.target)
+    try {
+      await createSubject.mutateAsync({
+        study: parseInt(form.get('study')),
+        site: parseInt(form.get('site')),
+        subject_identifier: form.get('subject_identifier'),
+        screening_number: form.get('screening_number'),
+      })
+      toast.success('Subject created successfully!')
+      setShowCreate(false)
+      setSelectedStudy('')
+    } catch (err) {
+      const detail = err.response?.data
+      const message = typeof detail === 'object'
+        ? Object.values(detail).flat().join(', ')
+        : detail?.detail || 'Failed to create subject'
+      toast.error(message)
+    }
+  }
+
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Subjects</h1>
-        <p className="text-sm text-slate-500 mt-0.5">{totalCount} subjects across all studies</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Subjects</h1>
+          <p className="text-sm text-slate-500 mt-0.5">{totalCount} subjects across all studies</p>
+        </div>
+        {can('CREATE_SUBJECT') && (
+          <button
+            onClick={() => setShowCreate(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-lg transition-colors shadow-sm"
+            id="create-subject-btn"
+          >
+            <FiPlus className="w-4 h-4" /> New Subject
+          </button>
+        )}
       </div>
 
       {/* Filters */}
@@ -132,6 +176,66 @@ export default function SubjectsPage() {
                 <button type="button" onClick={() => setEnrollModal(null)} className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg">Cancel</button>
                 <button type="submit" disabled={enroll.isPending} className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium rounded-lg disabled:opacity-50">
                   {enroll.isPending ? 'Enrolling...' : 'Enroll Subject'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Create Subject Modal */}
+      {can('CREATE_SUBJECT') && showCreate && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => { setShowCreate(false); setSelectedStudy('') }}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 p-6" onClick={e => e.stopPropagation()}>
+            <h2 className="text-lg font-semibold text-slate-800 mb-1">Screen New Subject</h2>
+            <p className="text-sm text-slate-500 mb-5">Register a new subject for screening in an active study</p>
+            <form onSubmit={handleCreate} className="space-y-4" id="create-subject-form">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Study *</label>
+                <select
+                  name="study"
+                  required
+                  value={selectedStudy}
+                  onChange={(e) => setSelectedStudy(e.target.value)}
+                  className="w-full px-3 py-2 border border-border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/30"
+                >
+                  <option value="">Select an active study...</option>
+                  {activeStudies.map(s => (
+                    <option key={s.id} value={s.id}>{s.protocol_number} — {s.name}</option>
+                  ))}
+                </select>
+                {activeStudies.length === 0 && (
+                  <p className="text-xs text-amber-500 mt-1">No active studies found. Activate a study first.</p>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Site *</label>
+                <select
+                  name="site"
+                  required
+                  disabled={!selectedStudy}
+                  className="w-full px-3 py-2 border border-border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/30 disabled:opacity-50"
+                >
+                  <option value="">{selectedStudy ? 'Select a site...' : 'Select a study first'}</option>
+                  {availableSites.map(s => (
+                    <option key={s.id} value={s.id}>{s.site_code} — {s.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Subject ID *</label>
+                  <input name="subject_identifier" required className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30" placeholder="HACT-001-001" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Screening Number</label>
+                  <input name="screening_number" className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30" placeholder="SCR-001" />
+                </div>
+              </div>
+              <div className="flex justify-end gap-3 pt-2">
+                <button type="button" onClick={() => { setShowCreate(false); setSelectedStudy('') }} className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg">Cancel</button>
+                <button type="submit" disabled={createSubject.isPending || !selectedStudy} className="px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-lg disabled:opacity-50">
+                  {createSubject.isPending ? 'Creating...' : 'Screen Subject'}
                 </button>
               </div>
             </form>
