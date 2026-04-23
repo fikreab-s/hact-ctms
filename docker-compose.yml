@@ -276,7 +276,7 @@ services:
       retries: 5
     networks:
       - hact-network
-    restart: unless-stopped
+    restart: "no"
     deploy:
       resources:
         limits:
@@ -322,7 +322,7 @@ services:
       - 8.8.4.4
     networks:
       - hact-network
-    restart: unless-stopped
+    restart: "no"
     deploy:
       resources:
         limits:
@@ -330,6 +330,44 @@ services:
           cpus: "1.0"
         reservations:
           memory: 512M
+
+  # ---------------------------------------------------------------------------
+  # Nextcloud — Document Management / eTMF (profile: nextcloud)
+  # Access: http://localhost:8089  (direct)
+  #         http://localhost/nextcloud/ (via NGINX)
+  # Start:  docker compose --profile nextcloud up -d
+  # ---------------------------------------------------------------------------
+  nextcloud:
+    image: nextcloud:28-apache
+    container_name: hact-nextcloud
+    profiles: ["nextcloud"]
+    ports:
+      - "127.0.0.1:8089:80"
+    environment:
+      NEXTCLOUD_ADMIN_USER: ${NEXTCLOUD_ADMIN_USER:-admin}
+      NEXTCLOUD_ADMIN_PASSWORD: ${NEXTCLOUD_ADMIN_PASSWORD:-hact-nc-2026}
+      NEXTCLOUD_TRUSTED_DOMAINS: "localhost nextcloud hact-nextcloud"
+      SQLITE_DATABASE: nextcloud
+      OVERWRITEPROTOCOL: http
+      OVERWRITECLIURL: http://localhost/nextcloud
+    volumes:
+      - nextcloud_data:/var/www/html
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost/status.php || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+    networks:
+      - hact-network
+    restart: "no"
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
+        reservations:
+          memory: 256M
 
 # =============================================================================
 # Volumes
@@ -350,6 +388,9 @@ volumes:
     name: hact-oc-postgres-data
   oc_data:
     name: hact-oc-data
+  # Nextcloud (profile: nextcloud)
+  nextcloud_data:
+    name: hact-nextcloud-data
 
 # =============================================================================
 # Networks
