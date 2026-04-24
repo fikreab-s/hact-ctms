@@ -222,3 +222,100 @@ def schedule_event_in_openclinica(
     except Exception as e:
         logger.exception("Error scheduling event in OpenClinica")
         raise self.retry(exc=e)
+
+
+# =============================================================================
+# Nextcloud eTMF Tasks
+# =============================================================================
+
+@shared_task(
+    bind=True,
+    max_retries=3,
+    default_retry_delay=30,
+    name="integrations.create_etmf_for_study",
+)
+def create_etmf_for_study(self, protocol_number: str):
+    """
+    Create the eTMF folder structure in Nextcloud for a new study.
+    Called when a Study is created in Django.
+    """
+    from integrations.nextcloud import create_etmf_structure, is_available
+
+    if not is_available():
+        logger.warning("Nextcloud not available — retrying in 30s (study=%s)", protocol_number)
+        raise self.retry(exc=Exception("Nextcloud not available"))
+
+    try:
+        ok = create_etmf_structure(protocol_number)
+        if ok:
+            logger.info("✅ eTMF structure created in Nextcloud for %s", protocol_number)
+            return {"status": "success", "protocol": protocol_number}
+        else:
+            raise self.retry(exc=Exception("eTMF folder creation failed"))
+
+    except Exception as e:
+        logger.exception("Error creating eTMF for %s", protocol_number)
+        raise self.retry(exc=e)
+
+
+@shared_task(
+    bind=True,
+    max_retries=3,
+    default_retry_delay=30,
+    name="integrations.upload_document_to_etmf",
+)
+def upload_document_to_etmf(
+    self,
+    protocol_number: str,
+    category: str,
+    filename: str,
+    content_b64: str,
+    content_type: str = "application/pdf",
+):
+    """
+    Upload a document to the eTMF in Nextcloud.
+    Content is passed as base64-encoded string (Celery-serializable).
+    """
+    import base64
+    from integrations.nextcloud import upload_to_etmf, is_available
+
+    if not is_available():
+        logger.warning("Nextcloud not available — retrying")
+        raise self.retry(exc=Exception("Nextcloud not available"))
+
+    try:
+        content = base64.b64decode(content_b64)
+        url = upload_to_etmf(protocol_number, category, filename, content, content_type)
+
+        if url:
+            logger.info("✅ Document uploaded to eTMF: %s/%s/%s", protocol_number, category, filename)
+            return {"status": "success", "url": url}
+        else:
+            raise self.retry(exc=Exception("Document upload failed"))
+
+    except Exception as e:
+        logger.exception("Error uploading document to eTMF")
+        raise self.retry(exc=e)
+
+
+@shared_task(name="integrations.check_nextcloud_health")
+def check_nextcloud_health():
+    """
+    Periodic health check for Nextcloud.
+    Can be scheduled via Celery Beat to monitor availability.
+    """
+    from integrations.nextcloud import is_available, get_server_info, list_etmf_studies
+
+    available = is_available()
+    logger.info("Nextcloud health check: %s", "✅ Available" if available else "❌ Down")
+
+    if available:
+        info = get_server_info() or {}
+        studies = list_etmf_studies()
+        return {
+            "status": "healthy",
+            "version": info.get("versionstring", "unknown"),
+            "etmf_studies": len(studies),
+        }
+
+    return {"status": "unavailable"}

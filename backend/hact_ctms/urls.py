@@ -74,6 +74,7 @@ urlpatterns = [
     path("api/v1/lab/", include("lab.urls")),
     path("api/v1/outputs/", include("outputs.urls")),
     path("api/v1/audit/", include("audit.urls")),
+    path("api/v1/integrations/", include("integrations.urls")),
 ]
 
 # Customize Django Admin
