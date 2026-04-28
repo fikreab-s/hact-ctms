@@ -31,4 +31,10 @@ urlpatterns = [
         views.integration_status,
         name="integration-status",
     ),
+    # ERPNext Webhook
+    path(
+        "erpnext/webhook/contract-signed/",
+        views.erpnext_webhook,
+        name="erpnext-webhook",
+    ),
 ]
