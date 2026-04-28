@@ -369,6 +369,196 @@ services:
         reservations:
           memory: 256M
 
+  # ---------------------------------------------------------------------------
+  # MariaDB — ERPNext Database (profile: erpnext)
+  # ---------------------------------------------------------------------------
+  mariadb:
+    image: mariadb:10.6
+    container_name: hact-mariadb
+    profiles: ["erpnext"]
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --skip-character-set-client-handshake
+      - --skip-innodb-read-only-compressed
+    environment:
+      MYSQL_ROOT_PASSWORD: ${ERPNEXT_DB_PASSWORD:-change-me-erpnext-db}
+      MYSQL_DATABASE: erpnext
+      MYSQL_USER: erpnext
+      MYSQL_PASSWORD: ${ERPNEXT_DB_PASSWORD:-change-me-erpnext-db}
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    networks:
+      - hact-network
+    restart: "no"
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
+        reservations:
+          memory: 256M
+
+  # ---------------------------------------------------------------------------
+  # ERPNext Configurator — One-time site setup (profile: erpnext)
+  # Writes common_site_config.json with DB/Redis connection info, then exits.
+  # ---------------------------------------------------------------------------
+  erpnext-configurator:
+    image: frappe/erpnext:v15.15.0
+    container_name: hact-erpnext-init
+    profiles: ["erpnext"]
+    restart: "no"
+    entrypoint:
+      - bash
+      - -c
+    command:
+      - >
+        ls -1 apps > sites/apps.txt;
+        bench set-config -g db_host $$DB_HOST;
+        bench set-config -gp db_port $$DB_PORT;
+        bench set-config -g redis_cache "redis://$$REDIS_CACHE";
+        bench set-config -g redis_queue "redis://$$REDIS_QUEUE";
+        bench set-config -g redis_socketio "redis://$$REDIS_SOCKETIO";
+    environment:
+      DB_HOST: mariadb
+      DB_PORT: "3306"
+      REDIS_CACHE: redis:6379/2
+      REDIS_QUEUE: redis:6379/3
+      REDIS_SOCKETIO: redis:6379/4
+    volumes:
+      - erpnext_sites:/home/frappe/frappe-bench/sites
+      - erpnext_logs:/home/frappe/frappe-bench/logs
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    networks:
+      - hact-network
+
+  # ---------------------------------------------------------------------------
+  # ERPNext Backend — Gunicorn Python API (profile: erpnext)
+  # Internal API endpoint for Django integration (http://erpnext:8000)
+  # ---------------------------------------------------------------------------
+  erpnext:
+    image: frappe/erpnext:v15.15.0
+    container_name: hact-erpnext
+    profiles: ["erpnext"]
+    volumes:
+      - erpnext_sites:/home/frappe/frappe-bench/sites
+      - erpnext_logs:/home/frappe/frappe-bench/logs
+    depends_on:
+      erpnext-configurator:
+        condition: service_completed_successfully
+      mariadb:
+        condition: service_healthy
+    networks:
+      - hact-network
+    restart: "no"
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
+        reservations:
+          memory: 256M
+
+  # ---------------------------------------------------------------------------
+  # ERPNext Frontend — NGINX static assets + proxy (profile: erpnext)
+  # Access: http://localhost:8080
+  # ---------------------------------------------------------------------------
+  erpnext-frontend:
+    image: frappe/erpnext:v15.15.0
+    container_name: hact-erpnext-frontend
+    profiles: ["erpnext"]
+    command:
+      - nginx-entrypoint.sh
+    environment:
+      BACKEND: erpnext:8000
+      FRAPPE_SITE_NAME_HEADER: hact.localhost
+      SOCKETIO: erpnext:9000
+      UPSTREAM_REAL_IP_ADDRESS: 127.0.0.1
+      UPSTREAM_REAL_IP_HEADER: X-Forwarded-For
+      UPSTREAM_REAL_IP_RECURSIVE: "off"
+      PROXY_READ_TIMEOUT: 120
+      CLIENT_MAX_BODY_SIZE: 50m
+    volumes:
+      - erpnext_sites:/home/frappe/frappe-bench/sites
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      erpnext:
+        condition: service_started
+    networks:
+      - hact-network
+    restart: "no"
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: "0.25"
+        reservations:
+          memory: 64M
+
+  # ---------------------------------------------------------------------------
+  # ERPNext Worker — Background job processing (profile: erpnext)
+  # ---------------------------------------------------------------------------
+  erpnext-worker:
+    image: frappe/erpnext:v15.15.0
+    container_name: hact-erpnext-worker
+    profiles: ["erpnext"]
+    command:
+      - bench
+      - worker
+      - --queue
+      - short,default,long
+    volumes:
+      - erpnext_sites:/home/frappe/frappe-bench/sites
+      - erpnext_logs:/home/frappe/frappe-bench/logs
+    depends_on:
+      erpnext:
+        condition: service_started
+    networks:
+      - hact-network
+    restart: "no"
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.5"
+        reservations:
+          memory: 128M
+
+  # ---------------------------------------------------------------------------
+  # ERPNext Scheduler — Periodic tasks (profile: erpnext)
+  # ---------------------------------------------------------------------------
+  erpnext-scheduler:
+    image: frappe/erpnext:v15.15.0
+    container_name: hact-erpnext-scheduler
+    profiles: ["erpnext"]
+    command:
+      - bench
+      - schedule
+    volumes:
+      - erpnext_sites:/home/frappe/frappe-bench/sites
+      - erpnext_logs:/home/frappe/frappe-bench/logs
+    depends_on:
+      erpnext:
+        condition: service_started
+    networks:
+      - hact-network
+    restart: "no"
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: "0.25"
+        reservations:
+          memory: 64M
+
 # =============================================================================
 # Volumes
 # =============================================================================
@@ -391,6 +581,13 @@ volumes:
   # Nextcloud (profile: nextcloud)
   nextcloud_data:
     name: hact-nextcloud-data
+  # ERPNext (profile: erpnext)
+  mariadb_data:
+    name: hact-mariadb-data
+  erpnext_sites:
+    name: hact-erpnext-sites
+  erpnext_logs:
+    name: hact-erpnext-logs
 
 # =============================================================================
 # Networks

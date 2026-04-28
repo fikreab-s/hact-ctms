@@ -319,3 +319,62 @@ def check_nextcloud_health():
         }
 
     return {"status": "unavailable"}
+
+# =============================================================================
+# ERPNext Tasks
+# =============================================================================
+
+@shared_task(
+    bind=True,
+    max_retries=3,
+    default_retry_delay=60,
+    name="integrations.sync_site_to_erpnext",
+)
+def sync_site_to_erpnext(self, site_id):
+    """
+    Sync a Django Site to an ERPNext Customer.
+    """
+    from clinical.models import Site
+    from integrations.erpnext import sync_site_to_customer
+    
+    try:
+        site = Site.objects.get(id=site_id)
+        
+        # Prepare data
+        site_data = {
+            "name": site.name,
+            "code": site.site_code,
+            "status": site.status
+        }
+        
+        erpnext_id = sync_site_to_customer(site_data)
+        
+        # Save ERPNext ID back to site
+        if erpnext_id and not site.erpnext_site_id:
+            site.erpnext_site_id = erpnext_id
+            site.save(update_fields=['erpnext_site_id'])
+            
+        return f"Site {site.name} synced to ERPNext as {erpnext_id}"
+        
+    except Site.DoesNotExist:
+        logger.error(f"Site {site_id} not found.")
+        return None
+    except Exception as e:
+        logger.error(f"ERPNext sync failed: {str(e)}")
+        raise self.retry(exc=e)
+
+@shared_task(
+    bind=True,
+    max_retries=3,
+    default_retry_delay=60,
+    name="integrations.check_erpnext_health",
+)
+def check_erpnext_health(self):
+    """Periodic task to verify ERPNext API connectivity."""
+    from integrations.erpnext import check_availability
+    
+    is_up = check_availability()
+    if not is_up:
+        logger.warning("ERPNext health check failed. Retrying in 60s...")
+        raise self.retry()
+    return True

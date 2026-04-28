@@ -200,4 +200,55 @@ def integration_status(request):
     except Exception:
         result["openclinica"] = {"status": "error"}
 
+    # ERPNext
+    try:
+        from integrations.erpnext import check_availability as erp_available
+        result["erpnext"] = {
+            "status": "healthy" if erp_available() else "unavailable",
+        }
+    except Exception:
+        result["erpnext"] = {"status": "error"}
+
     return Response(result)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def erpnext_webhook(request):
+    """
+    Webhook endpoint for ERPNext events.
+    Expected to be called when a Site Contract is marked as 'Signed'.
+    
+    POST /api/v1/integrations/erpnext/webhook/contract-signed/
+    Body:
+        {
+            "erpnext_site_id": "Customer-001",
+            "contract_status": "Signed"
+        }
+    """
+    erpnext_site_id = request.data.get("erpnext_site_id")
+    contract_status = request.data.get("contract_status")
+    
+    if not erpnext_site_id:
+        return Response(
+            {"error": "erpnext_site_id is required"}, 
+            status=status.HTTP_400_BAD_REQUEST
+        )
+        
+    if contract_status == "Signed":
+        from clinical.models import Site
+        try:
+            site = Site.objects.get(erpnext_site_id=erpnext_site_id)
+            if site.status != 'active':
+                site.status = 'active'
+                site.save(update_fields=['status'])
+                logger.info(f"Site {site.name} activated via ERPNext contract signature webhook.")
+            return Response({"status": "success", "message": "Site activated."})
+        except Site.DoesNotExist:
+            logger.warning(f"ERPNext webhook received for unknown site ID: {erpnext_site_id}")
+            return Response(
+                {"error": "Site not found in CTMS"}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+            
+    return Response({"status": "ignored", "message": f"Contract status is {contract_status}"})

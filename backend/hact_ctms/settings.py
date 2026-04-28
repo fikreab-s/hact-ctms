@@ -133,6 +133,15 @@ WSGI_APPLICATION = "hact_ctms.wsgi.application"
 # Database — PostgreSQL 16
 # =============================================================================
 
+NEXTCLOUD_URL = os.getenv("NEXTCLOUD_URL")
+NEXTCLOUD_ADMIN_USER = os.getenv("NEXTCLOUD_ADMIN_USER")
+NEXTCLOUD_ADMIN_PASSWORD = os.getenv("NEXTCLOUD_ADMIN_PASSWORD")
+
+# ERPNext Operations Integration
+ERPNEXT_URL = os.getenv("ERPNEXT_URL")
+ERPNEXT_API_KEY = os.getenv("ERPNEXT_API_KEY")
+ERPNEXT_API_SECRET = os.getenv("ERPNEXT_API_SECRET")
+
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
