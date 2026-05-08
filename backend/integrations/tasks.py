@@ -378,3 +378,174 @@ def check_erpnext_health(self):
         logger.warning("ERPNext health check failed. Retrying in 60s...")
         raise self.retry()
     return True
+
+
+# =============================================================================
+# SENAITE Integration Tasks (Laboratory)
+# =============================================================================
+
+@shared_task(
+    bind=True,
+    max_retries=3,
+    default_retry_delay=30,
+    name="integrations.sync_sample_to_senaite",
+)
+def sync_sample_to_senaite(self, sample_id):
+    """
+    Push a SampleCollection record from Django to SENAITE as an AnalysisRequest.
+    Triggered when a new SampleCollection is created.
+    """
+    from lab.models import SampleCollection
+    from integrations.senaite import create_sample
+
+    try:
+        sample = SampleCollection.objects.select_related("subject").get(id=sample_id)
+
+        sample_data = {
+            "client_title": "HACT Clinical Trials",
+            "sample_type": sample.sample_type,
+            "subject_identifier": sample.subject.subject_identifier,
+        }
+
+        result = create_sample(sample_data)
+
+        if result.get("success") and result.get("senaite_id"):
+            sample.senaite_sample_id = result["senaite_id"]
+            sample.save(update_fields=["senaite_sample_id"])
+            logger.info("Sample %s synced to SENAITE: %s", sample_id, result["senaite_id"])
+            return f"Sample {sample_id} synced to SENAITE as {result['senaite_id']}"
+        else:
+            logger.warning("SENAITE sample creation returned no ID: %s", result.get("error"))
+            return None
+
+    except SampleCollection.DoesNotExist:
+        logger.error("SampleCollection %s not found.", sample_id)
+        return None
+    except Exception as e:
+        logger.error("SENAITE sample sync failed: %s", str(e))
+        raise self.retry(exc=e)
+
+
+@shared_task(
+    bind=True,
+    max_retries=2,
+    default_retry_delay=60,
+    name="integrations.pull_results_from_senaite",
+)
+def pull_results_from_senaite(self, study_id=None):
+    """
+    Pull published lab results from SENAITE and import into Django LabResult.
+    Auto-flags results (H/L/N) based on ReferenceRange.
+
+    Can be called on-demand or scheduled via Celery Beat.
+    """
+    from decimal import Decimal, InvalidOperation
+    from lab.models import LabResult, ReferenceRange
+    from clinical.models import Subject
+
+    from integrations.senaite import fetch_published_results
+
+    try:
+        results = fetch_published_results(client_title="HACT Clinical Trials")
+
+        if not results:
+            logger.info("No published results found in SENAITE.")
+            return "No results to import."
+
+        # Load reference ranges for flagging
+        ref_ranges = {}
+        rr_qs = ReferenceRange.objects.all()
+        if study_id:
+            rr_qs = rr_qs.filter(study_id=study_id)
+        for rr in rr_qs:
+            ref_ranges[rr.test_name.lower()] = rr
+
+        imported = 0
+        skipped = 0
+
+        for row in results:
+            subject_id = row.get("subject_identifier", "").strip()
+            test_name = row.get("test_name", "").strip()
+            result_value = row.get("result_value", "").strip()
+
+            if not subject_id or not test_name or not result_value:
+                skipped += 1
+                continue
+
+            # Find subject
+            subject_qs = Subject.objects.filter(subject_identifier=subject_id)
+            if study_id:
+                subject_qs = subject_qs.filter(study_id=study_id)
+            subject = subject_qs.first()
+
+            if not subject:
+                skipped += 1
+                continue
+
+            # Skip if already imported (avoid duplicates)
+            exists = LabResult.objects.filter(
+                subject=subject,
+                test_name=test_name,
+                result_value=result_value,
+            ).exists()
+
+            if exists:
+                skipped += 1
+                continue
+
+            # Auto-flag
+            flag = ""
+            ref_low = None
+            ref_high = None
+            rr = ref_ranges.get(test_name.lower())
+            if rr:
+                ref_low = rr.range_low
+                ref_high = rr.range_high
+                try:
+                    val = Decimal(result_value)
+                    if val < rr.range_low:
+                        flag = "L"
+                    elif val > rr.range_high:
+                        flag = "H"
+                    else:
+                        flag = "N"
+                except (InvalidOperation, ValueError):
+                    flag = ""
+
+            # Import result
+            from django.utils import timezone
+            LabResult.objects.create(
+                subject=subject,
+                test_name=test_name,
+                result_value=result_value,
+                unit=row.get("unit", ""),
+                reference_range_low=ref_low,
+                reference_range_high=ref_high,
+                flag=flag,
+                result_date=timezone.now().date(),
+            )
+            imported += 1
+
+        logger.info("SENAITE import complete: %d imported, %d skipped", imported, skipped)
+        return f"Imported {imported} results, skipped {skipped}"
+
+    except Exception as e:
+        logger.error("SENAITE result pull failed: %s", str(e))
+        raise self.retry(exc=e)
+
+
+@shared_task(
+    bind=True,
+    max_retries=3,
+    default_retry_delay=60,
+    name="integrations.check_senaite_health",
+)
+def check_senaite_health(self):
+    """Periodic task to verify SENAITE API connectivity."""
+    from integrations.senaite import check_availability
+
+    is_up = check_availability()
+    if not is_up:
+        logger.warning("SENAITE health check failed. Retrying in 60s...")
+        raise self.retry()
+    return True

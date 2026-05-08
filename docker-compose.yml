@@ -559,6 +559,37 @@ services:
         reservations:
           memory: 64M
 
+  # ---------------------------------------------------------------------------
+  # SENAITE — Laboratory Information Management System (profile: senaite)
+  # Access: http://localhost:8081 (direct) or /senaite/ (via NGINX)
+  # Start:  docker compose --profile senaite up -d
+  # Uses built-in Zope Object Database (ZODB) — no extra DB required
+  # ---------------------------------------------------------------------------
+  senaite:
+    image: senaite/senaite:2.x
+    container_name: hact-senaite
+    profiles: ["senaite"]
+    ports:
+      - "127.0.0.1:8081:8080"
+    volumes:
+      - senaite_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib2; urllib2.urlopen('http://localhost:8080/')\" || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+    networks:
+      - hact-network
+    restart: "no"
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.0"
+        reservations:
+          memory: 512M
+
 # =============================================================================
 # Volumes
 # =============================================================================
@@ -588,6 +619,9 @@ volumes:
     name: hact-erpnext-sites
   erpnext_logs:
     name: hact-erpnext-logs
+  # SENAITE (profile: senaite)
+  senaite_data:
+    name: hact-senaite-data
 
 # =============================================================================
 # Networks

@@ -142,6 +142,11 @@ ERPNEXT_URL = os.getenv("ERPNEXT_URL")
 ERPNEXT_API_KEY = os.getenv("ERPNEXT_API_KEY")
 ERPNEXT_API_SECRET = os.getenv("ERPNEXT_API_SECRET")
 
+# SENAITE Laboratory Integration
+SENAITE_URL = os.getenv("SENAITE_URL", "http://senaite:8080")
+SENAITE_API_USER = os.getenv("SENAITE_API_USER", "")
+SENAITE_API_PASSWORD = os.getenv("SENAITE_API_PASSWORD", "")
+
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
@@ -303,6 +308,25 @@ CELERY_TASK_TIME_LIMIT = 300  # 5 minutes hard limit
 CELERY_TASK_SOFT_TIME_LIMIT = 240  # 4 minutes soft limit
 CELERY_WORKER_MAX_TASKS_PER_CHILD = 100  # Prevent memory leaks
 CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
+
+# Celery Beat — Automatic Scheduled Tasks
+CELERY_BEAT_SCHEDULE = {
+    # Pull published lab results from SENAITE every 15 minutes
+    "pull-senaite-results-every-15-min": {
+        "task": "integrations.pull_results_from_senaite",
+        "schedule": 900,  # 15 minutes in seconds
+    },
+    # Health check SENAITE every 10 minutes
+    "check-senaite-health-every-10-min": {
+        "task": "integrations.check_senaite_health",
+        "schedule": 600,  # 10 minutes in seconds
+    },
+    # Health check ERPNext every 10 minutes
+    "check-erpnext-health-every-10-min": {
+        "task": "integrations.check_erpnext_health",
+        "schedule": 600,
+    },
+}
 
 # =============================================================================
 # Internationalization

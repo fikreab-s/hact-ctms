@@ -37,4 +37,10 @@ urlpatterns = [
         views.erpnext_webhook,
         name="erpnext-webhook",
     ),
+    # SENAITE Webhook
+    path(
+        "senaite/webhook/results-published/",
+        views.senaite_webhook,
+        name="senaite-webhook",
+    ),
 ]
