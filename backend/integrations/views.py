@@ -209,6 +209,15 @@ def integration_status(request):
     except Exception:
         result["erpnext"] = {"status": "error"}
 
+    # SENAITE
+    try:
+        from integrations.senaite import check_availability as senaite_available
+        result["senaite"] = {
+            "status": "healthy" if senaite_available() else "unavailable",
+        }
+    except Exception:
+        result["senaite"] = {"status": "error"}
+
     return Response(result)
 
 
@@ -252,3 +261,50 @@ def erpnext_webhook(request):
             )
             
     return Response({"status": "ignored", "message": f"Contract status is {contract_status}"})
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def senaite_webhook(request):
+    """
+    Webhook endpoint for SENAITE events.
+    Called when lab results are published in SENAITE.
+
+    POST /api/v1/integrations/senaite/webhook/results-published/
+    Body:
+        {
+            "senaite_sample_id": "SAMP-2026-0001",
+            "status": "published"
+        }
+    """
+    senaite_sample_id = request.data.get("senaite_sample_id")
+    sample_status = request.data.get("status")
+
+    if not senaite_sample_id:
+        return Response(
+            {"error": "senaite_sample_id is required"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    if sample_status == "published":
+        from lab.models import SampleCollection
+        try:
+            sample = SampleCollection.objects.get(senaite_sample_id=senaite_sample_id)
+            if sample.status != "completed":
+                sample.status = "completed"
+                sample.save(update_fields=["status"])
+                logger.info(
+                    "Sample %s marked completed via SENAITE results-published webhook.",
+                    senaite_sample_id,
+                )
+            return Response({"status": "success", "message": "Sample marked completed."})
+        except SampleCollection.DoesNotExist:
+            logger.warning(
+                "SENAITE webhook received for unknown sample: %s", senaite_sample_id
+            )
+            return Response(
+                {"error": "Sample not found in CTMS"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+    return Response({"status": "ignored", "message": f"Sample status is {sample_status}"})
