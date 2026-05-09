@@ -144,6 +144,14 @@ export function useAdverseEvents(params = {}) {
   })
 }
 
+export function useCreateAdverseEvent() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data) => apiClient.post(API.ADVERSE_EVENTS, data).then(r => r.data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['adverse-events'] }),
+  })
+}
+
 // ── Lab Results ──
 export function useLabResults(params = {}) {
   return useQuery({
@@ -176,5 +184,84 @@ export function useQualityReports(params = {}) {
   return useQuery({
     queryKey: ['quality-reports', params],
     queryFn: () => apiClient.get(API.QUALITY_REPORTS, { params }).then(r => r.data),
+  })
+}
+
+// ── Integration Status ──
+export function useIntegrationStatus() {
+  return useQuery({
+    queryKey: ['integration-status'],
+    queryFn: () => apiClient.get(API.INTEGRATIONS_STATUS).then(r => r.data),
+    refetchInterval: 60000,
+  })
+}
+
+// ── CIOMS Forms ──
+export function useCiomsForms(params = {}) {
+  return useQuery({
+    queryKey: ['cioms-forms', params],
+    queryFn: () => apiClient.get(API.CIOMS_FORMS, { params }).then(r => r.data),
+  })
+}
+
+export function useCreateCiomsForm() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data) => apiClient.post(API.CIOMS_FORMS, data).then(r => r.data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['cioms-forms'] }),
+  })
+}
+
+export function useGenerateCiomsPdf() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id) => apiClient.post(`${API.CIOMS_FORMS}${id}/generate-pdf/`).then(r => r.data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['cioms-forms'] }),
+  })
+}
+
+// ── Dataset Exports ──
+export function useExportCSV() {
+  return useMutation({
+    mutationFn: (data) => apiClient.post(`${API.SNAPSHOTS}export-csv/`, data).then(r => r.data),
+  })
+}
+
+export function useExportODM() {
+  return useMutation({
+    mutationFn: (data) => apiClient.post(`${API.SNAPSHOTS}export-odm/`, data).then(r => r.data),
+  })
+}
+
+// ── Quality Reports ──
+export function useGenerateQualityReport() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data) => apiClient.post(`${API.QUALITY_REPORTS}generate/`, data).then(r => r.data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['quality-reports'] }),
+  })
+}
+
+// ── Milestones ──
+export function useMilestones(params = {}) {
+  return useQuery({
+    queryKey: ['milestones', params],
+    queryFn: () => apiClient.get(API.MILESTONES, { params }).then(r => r.data),
+  })
+}
+
+export function useCreateMilestone() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data) => apiClient.post(API.MILESTONES, data).then(r => r.data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['milestones'] }),
+  })
+}
+
+export function useUpdateMilestone() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, ...data }) => apiClient.patch(`${API.MILESTONES}${id}/`, data).then(r => r.data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['milestones'] }),
   })
 }

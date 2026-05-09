@@ -1,3 +1,11 @@
+/**
+ * ProtectedRoute — guards all authenticated routes.
+ *
+ * - Redirects to /login if not authenticated (saves return URL)
+ * - Fetches user profile on page reload
+ * - Checks route-level RBAC permissions
+ */
+
 import { useEffect } from 'react'
 import { Outlet, Navigate, useLocation } from 'react-router-dom'
 import useAuthStore from '../store/authStore'
@@ -15,8 +23,9 @@ export default function ProtectedRoute() {
     }
   }, [isAuthenticated, user, fetchUser])
 
-  // Not authenticated → redirect to login
+  // Not authenticated → save return URL and redirect to login
   if (!isAuthenticated) {
+    sessionStorage.setItem('hact_return_to', location.pathname)
     return <Navigate to="/login" replace />
   }
 
@@ -26,19 +35,19 @@ export default function ProtectedRoute() {
   }
 
   // Check route-level permission
-  // Match the current path against ROUTE_ACCESS keys
   const currentPath = location.pathname
   const isSuperuser = user?.is_superuser || false
 
-  // Find matching route (handle parameterized routes like /studies/:id)
+  // Find matching route (handle parameterized routes)
   let matchedRoute = currentPath
   if (currentPath.startsWith('/studies/') && currentPath !== '/studies') {
     matchedRoute = '/studies/:id'
+  } else if (currentPath.startsWith('/subjects/') && currentPath !== '/subjects') {
+    matchedRoute = '/subjects/:id'
   }
 
   // Check if user has access to this route
   if (!canAccessRoute(roles, isSuperuser, matchedRoute)) {
-    // Find needed roles for error message
     const neededRoles = ROUTE_ACCESS[matchedRoute]
     const roleLabel = neededRoles
       ? neededRoles.filter(r => r !== 'admin').join(', ').replace(/_/g, ' ')

@@ -1,20 +1,28 @@
-import { FiFolder, FiUsers, FiMessageSquare, FiAlertTriangle, FiActivity, FiTrendingUp } from 'react-icons/fi'
+import {
+  FiFolder, FiUsers, FiMessageSquare, FiAlertTriangle,
+  FiActivity, FiTrendingUp, FiShield, FiServer,
+} from 'react-icons/fi'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
-import { useStudies, useSubjects, useQueries, useAdverseEvents } from '../api/queries'
+import { useStudies, useSubjects, useQueries, useAdverseEvents, useGenerateQualityReport, useIntegrationStatus } from '../api/queries'
 import StatCard from '../components/StatCard'
 import StatusBadge from '../components/StatusBadge'
 import LoadingSpinner from '../components/LoadingSpinner'
 import { Link } from 'react-router-dom'
 import useAuthStore from '../store/authStore'
+import usePermission from '../auth/usePermission'
+import toast from 'react-hot-toast'
 
 const COLORS = ['#10B981', '#0EA5E9', '#6366F1', '#F43F5E', '#F59E0B']
 
 export default function DashboardPage() {
   const { user } = useAuthStore()
+  const { can } = usePermission()
   const { data: studiesData, isLoading: loadingStudies } = useStudies()
   const { data: subjectsData, isLoading: loadingSubjects } = useSubjects()
   const { data: queriesData, isLoading: loadingQueries } = useQueries()
   const { data: aeData, isLoading: loadingAE } = useAdverseEvents()
+  const { data: integrationData } = useIntegrationStatus()
+  const generateQuality = useGenerateQualityReport()
 
   if (loadingStudies || loadingSubjects || loadingQueries || loadingAE) {
     return <LoadingSpinner text="Loading dashboard..." />
@@ -30,7 +38,12 @@ export default function DashboardPage() {
   const totalSubjects = subjectsData?.count || 0
   const enrolledCount = subjects.filter(s => s.status === 'enrolled').length
   const openQueries = queries.filter(q => q.status === 'open').length
-  const saeCount = adverseEvents.filter(ae => ae.serious).length
+  const closedQueries = queries.filter(q => q.status === 'closed').length
+  const saeCount = adverseEvents.filter(ae => ae.serious || ae.is_serious).length
+
+  // Data quality score: percentage of queries that are closed
+  const totalQueries = queries.length
+  const qualityScore = totalQueries > 0 ? Math.round((closedQueries / totalQueries) * 100) : 100
 
   // Enrollment by status for pie chart
   const statusCounts = subjects.reduce((acc, s) => {
@@ -146,6 +159,94 @@ export default function DashboardPage() {
               )}
             </tbody>
           </table>
+        </div>
+      </div>
+
+      {/* Data Quality + System Status Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Data Quality Score */}
+        <div className="bg-card rounded-xl border border-border p-5 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+              <FiShield className="w-4 h-4 text-primary-500" /> Data Quality
+            </h3>
+            {can('GENERATE_QUALITY_REPORT') && studies.length > 0 && (
+              <button onClick={async () => {
+                try {
+                  const result = await generateQuality.mutateAsync({ study: studies[0].id, report_type: 'comprehensive' })
+                  toast.success('Quality report generated!')
+                } catch (err) {
+                  toast.error(err.response?.data?.detail || 'Failed to generate report')
+                }
+              }}
+                disabled={generateQuality.isPending}
+                className="text-xs text-primary-600 hover:text-primary-700 font-medium disabled:opacity-50">
+                {generateQuality.isPending ? 'Generating...' : 'Generate Report'}
+              </button>
+            )}
+          </div>
+          <div className="flex items-center gap-6">
+            <div className="relative w-24 h-24">
+              <svg viewBox="0 0 36 36" className="w-24 h-24 -rotate-90">
+                <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                  fill="none" stroke="#e2e8f0" strokeWidth="3" />
+                <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                  fill="none"
+                  stroke={qualityScore >= 80 ? '#10B981' : qualityScore >= 50 ? '#F59E0B' : '#F43F5E'}
+                  strokeWidth="3"
+                  strokeDasharray={`${qualityScore}, 100`}
+                  strokeLinecap="round" />
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className={`text-xl font-bold ${qualityScore >= 80 ? 'text-emerald-600' : qualityScore >= 50 ? 'text-amber-600' : 'text-rose-600'}`}>
+                  {qualityScore}%
+                </span>
+              </div>
+            </div>
+            <div className="space-y-2 text-sm">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                <span className="text-slate-600">Resolved queries: <strong>{closedQueries}</strong></span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-rose-500" />
+                <span className="text-slate-600">Open queries: <strong>{openQueries}</strong></span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-amber-500" />
+                <span className="text-slate-600">SAEs: <strong>{saeCount}</strong></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Integration Status */}
+        <div className="bg-card rounded-xl border border-border p-5 shadow-sm">
+          <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2 mb-4">
+            <FiServer className="w-4 h-4 text-primary-500" /> System Status
+          </h3>
+          <div className="space-y-2.5">
+            {[
+              { name: 'PostgreSQL', key: 'database', always: true },
+              { name: 'Redis Cache', key: 'redis', always: true },
+              { name: 'Keycloak SSO', key: 'keycloak', always: true },
+              { name: 'OpenClinica EDC', key: 'openclinica' },
+              { name: 'SENAITE LIMS', key: 'senaite' },
+              { name: 'ERPNext', key: 'erpnext' },
+            ].map(svc => {
+              const status = integrationData?.[svc.key]
+              const isUp = svc.always ? true : status?.available || status?.status === 'connected'
+              return (
+                <div key={svc.key} className="flex items-center justify-between py-1">
+                  <span className="text-sm text-slate-600">{svc.name}</span>
+                  <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full ${isUp ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-400'}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${isUp ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                    {isUp ? 'Online' : 'Offline'}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
         </div>
       </div>
     </div>

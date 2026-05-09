@@ -1,7 +1,13 @@
 import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { FiArrowLeft, FiMapPin, FiUsers, FiCalendar, FiAlertTriangle, FiPlus } from 'react-icons/fi'
-import { useStudy, useSubjects, useTransitionStudy, useCreateSite } from '../api/queries'
+import {
+  FiArrowLeft, FiMapPin, FiUsers, FiCalendar, FiAlertTriangle,
+  FiPlus, FiDownload, FiFileText, FiFlag, FiCheckCircle, FiClock,
+} from 'react-icons/fi'
+import {
+  useStudy, useSubjects, useTransitionStudy, useCreateSite,
+  useExportCSV, useExportODM, useMilestones, useCreateMilestone, useUpdateMilestone,
+} from '../api/queries'
 import StatusBadge from '../components/StatusBadge'
 import LoadingSpinner from '../components/LoadingSpinner'
 import usePermission from '../auth/usePermission'
@@ -14,7 +20,13 @@ export default function StudyDetailPage() {
   const { data: subjectsData } = useSubjects({ study: id })
   const transition = useTransitionStudy()
   const createSite = useCreateSite()
+  const exportCSV = useExportCSV()
+  const exportODM = useExportODM()
+  const { data: milestonesData } = useMilestones({ study: id })
+  const createMilestone = useCreateMilestone()
+  const updateMilestone = useUpdateMilestone()
   const [showCreateSite, setShowCreateSite] = useState(false)
+  const [showCreateMilestone, setShowCreateMilestone] = useState(false)
 
   if (isLoading) return <LoadingSpinner text="Loading study..." />
   if (!study) return <p className="text-slate-500 p-6">Study not found.</p>
@@ -22,6 +34,7 @@ export default function StudyDetailPage() {
   const subjects = subjectsData?.results || []
   const sites = study.sites || []
   const visits = study.visits || []
+  const milestones = milestonesData?.results || []
   const isLocked = study.status === 'locked' || study.status === 'archived'
 
   const nextStatus = { planning: 'active', active: 'locked', locked: 'archived' }[study.status]
@@ -61,6 +74,44 @@ export default function StudyDetailPage() {
     }
   }
 
+  const handleExport = async (type) => {
+    const fn = type === 'csv' ? exportCSV : exportODM
+    try {
+      const result = await fn.mutateAsync({ study: parseInt(id) })
+      toast.success(`${type.toUpperCase()} export generated!`)
+      if (result.download_url) window.open(result.download_url, '_blank')
+    } catch (err) {
+      toast.error(err.response?.data?.detail || `${type.toUpperCase()} export failed`)
+    }
+  }
+
+  const handleCreateMilestone = async (e) => {
+    e.preventDefault()
+    const form = new FormData(e.target)
+    try {
+      await createMilestone.mutateAsync({
+        study: parseInt(id),
+        milestone_type: form.get('milestone_type'),
+        planned_date: form.get('planned_date'),
+        status: 'planned',
+      })
+      toast.success('Milestone created')
+      setShowCreateMilestone(false)
+      e.target.reset()
+    } catch (err) {
+      toast.error('Failed to create milestone')
+    }
+  }
+
+  const handleCompleteMilestone = async (msId) => {
+    try {
+      await updateMilestone.mutateAsync({ id: msId, status: 'completed', actual_date: new Date().toISOString().split('T')[0] })
+      toast.success('Milestone completed')
+    } catch (err) {
+      toast.error('Failed to update milestone')
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Back + Header */}
@@ -82,6 +133,20 @@ export default function StudyDetailPage() {
                 className="px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
               >
                 {transition.isPending ? 'Processing...' : `Move to ${nextStatus}`}
+              </button>
+            )}
+            {can('EXPORT_CSV') && (
+              <button onClick={() => handleExport('csv')}
+                disabled={exportCSV.isPending}
+                className="inline-flex items-center gap-1.5 px-3 py-2 border border-border text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-lg transition-colors disabled:opacity-50">
+                <FiDownload className="w-4 h-4" /> {exportCSV.isPending ? 'Exporting...' : 'CSV'}
+              </button>
+            )}
+            {can('EXPORT_ODM') && (
+              <button onClick={() => handleExport('odm')}
+                disabled={exportODM.isPending}
+                className="inline-flex items-center gap-1.5 px-3 py-2 border border-emerald-200 text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-colors disabled:opacity-50">
+                <FiFileText className="w-4 h-4" /> {exportODM.isPending ? 'Exporting...' : 'ODM XML'}
               </button>
             )}
           </div>
@@ -203,6 +268,99 @@ export default function StudyDetailPage() {
           </table>
         </div>
       </div>
+
+      {/* ── Milestones ── */}
+      <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
+        <div className="px-5 py-4 border-b border-border flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <FiFlag className="w-4 h-4 text-primary-500" />
+            <h2 className="font-semibold text-slate-800">Milestones</h2>
+            <span className="text-xs text-slate-400 ml-1">
+              {milestones.filter(m => m.status === 'completed').length}/{milestones.length} completed
+            </span>
+          </div>
+          {can('MANAGE_MILESTONES') && !isLocked && (
+            <button onClick={() => setShowCreateMilestone(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary-50 text-primary-700 text-xs font-medium rounded-lg hover:bg-primary-100 transition-colors">
+              <FiPlus className="w-3.5 h-3.5" /> Add Milestone
+            </button>
+          )}
+        </div>
+
+        {milestones.length === 0 ? (
+          <div className="px-5 py-8 text-center text-sm text-slate-400">
+            No milestones defined yet.
+          </div>
+        ) : (
+          <div className="divide-y divide-border">
+            {milestones.map(ms => (
+              <div key={ms.id} className="px-5 py-3 flex items-center justify-between hover:bg-card-hover transition-colors">
+                <div className="flex items-center gap-3">
+                  {ms.status === 'completed' ? (
+                    <FiCheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
+                  ) : ms.status === 'delayed' ? (
+                    <FiAlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
+                  ) : (
+                    <FiClock className="w-4 h-4 text-slate-400 shrink-0" />
+                  )}
+                  <div>
+                    <p className={`text-sm font-medium ${ms.status === 'completed' ? 'text-slate-400 line-through' : 'text-slate-700'}`}>
+                      {ms.milestone_type}
+                    </p>
+                    <p className="text-xs text-slate-400">
+                      Planned: {ms.planned_date}
+                      {ms.actual_date && <span className="ml-2 text-emerald-600">✓ {ms.actual_date}</span>}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <StatusBadge status={ms.status} />
+                  {can('MANAGE_MILESTONES') && ms.status !== 'completed' && (
+                    <button onClick={() => handleCompleteMilestone(ms.id)}
+                      className="text-xs text-emerald-600 hover:text-emerald-700 font-medium hover:underline">
+                      Complete
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Create Milestone Modal */}
+      {can('MANAGE_MILESTONES') && showCreateMilestone && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setShowCreateMilestone(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6" onClick={e => e.stopPropagation()}>
+            <h2 className="text-lg font-semibold text-slate-800 mb-4">Add Milestone</h2>
+            <form onSubmit={handleCreateMilestone} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Milestone Type *</label>
+                <select name="milestone_type" required className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30">
+                  <option value="">Select...</option>
+                  <option value="First Patient In">First Patient In</option>
+                  <option value="50% Enrollment">50% Enrollment</option>
+                  <option value="Last Patient In">Last Patient In</option>
+                  <option value="Last Patient Out">Last Patient Out</option>
+                  <option value="Database Lock">Database Lock</option>
+                  <option value="Statistical Analysis Complete">Statistical Analysis Complete</option>
+                  <option value="Final Report">Final Report</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Planned Date *</label>
+                <input name="planned_date" type="date" required className="w-full px-3 py-2 border border-border rounded-lg text-sm" />
+              </div>
+              <div className="flex justify-end gap-3 pt-2">
+                <button type="button" onClick={() => setShowCreateMilestone(false)} className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg">Cancel</button>
+                <button type="submit" disabled={createMilestone.isPending} className="px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-lg disabled:opacity-50">
+                  {createMilestone.isPending ? 'Creating...' : 'Add Milestone'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Create Site Modal */}
       {can('CREATE_SITE') && showCreateSite && (
