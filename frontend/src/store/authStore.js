@@ -168,6 +168,57 @@ const useAuthStore = create((set, get) => {
       }
     },
 
+    // ── Password Grant Login (HTTP fallback) ──
+    // Used when OIDC redirect is unavailable (no HTTPS)
+    loginWithPassword: async (username, password) => {
+      set({ isLoading: true, error: null })
+      try {
+        const { KEYCLOAK_TOKEN_URL, KEYCLOAK_CLIENT_ID } = await import('../api/endpoints')
+        const params = new URLSearchParams({
+          client_id: KEYCLOAK_CLIENT_ID,
+          grant_type: 'password',
+          username,
+          password,
+        })
+        const tokenRes = await fetch(KEYCLOAK_TOKEN_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: params,
+        })
+        if (!tokenRes.ok) {
+          const err = await tokenRes.json().catch(() => ({}))
+          throw new Error(err.error_description || 'Login failed. Check your credentials.')
+        }
+        const tokens = await tokenRes.json()
+        const { access_token, refresh_token, id_token } = tokens
+        localStorage.setItem('hact_access_token', access_token)
+        localStorage.setItem('hact_refresh_token', refresh_token)
+        if (id_token) localStorage.setItem('hact_id_token', id_token)
+
+        const meRes = await apiClient.get(API.AUTH.ME, {
+          headers: { Authorization: `Bearer ${access_token}` },
+        })
+        const user = meRes.data
+        set({
+          accessToken: access_token,
+          refreshToken: refresh_token,
+          idToken: id_token || null,
+          user,
+          roles: user.roles || [],
+          isAuthenticated: true,
+          isLoading: false,
+        })
+        scheduleTokenRefresh(access_token)
+        attachActivityListeners()
+        resetSessionTimer()
+        return true
+      } catch (err) {
+        const message = err.message || 'Login failed. Check your credentials.'
+        set({ error: message, isLoading: false, isAuthenticated: false })
+        return false
+      }
+    },
+
     // ── Fetch current user profile (on page reload) ──
     fetchUser: async () => {
       const token = localStorage.getItem('hact_access_token')

@@ -13,6 +13,7 @@ import SafetyPage from './pages/SafetyPage'
 import LabPage from './pages/LabPage'
 import AuditPage from './pages/AuditPage'
 import IntegrationStatusPage from './pages/IntegrationStatusPage'
+import ExternalSystemPage from './pages/ExternalSystemPage'
 
 export default function App() {
   return (
@@ -35,6 +36,10 @@ export default function App() {
             <Route path="/lab" element={<LabPage />} />
             <Route path="/audit" element={<AuditPage />} />
             <Route path="/integrations" element={<IntegrationStatusPage />} />
+            <Route path="/integrations/openclinica" element={<ExternalSystemPage systemKey="openclinica" />} />
+            <Route path="/integrations/senaite" element={<ExternalSystemPage systemKey="senaite" />} />
+            <Route path="/integrations/nextcloud" element={<ExternalSystemPage systemKey="nextcloud" />} />
+            <Route path="/integrations/erpnext" element={<ExternalSystemPage systemKey="erpnext" />} />
           </Route>
         </Route>
 
