@@ -15,7 +15,16 @@ export default defineConfig({
         target: 'http://localhost:80',
         changeOrigin: true,
       },
-      '/auth': {
+      // Proxy Keycloak auth endpoints but NOT /auth/callback (React handles that)
+      '/auth/realms': {
+        target: 'http://localhost:80',
+        changeOrigin: true,
+      },
+      '/auth/admin': {
+        target: 'http://localhost:80',
+        changeOrigin: true,
+      },
+      '/auth/resources': {
         target: 'http://localhost:80',
         changeOrigin: true,
       },

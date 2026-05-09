@@ -48,6 +48,11 @@ export const ROUTE_ACCESS = {
     ROLES.ADMIN, ROLES.STUDY_ADMIN, ROLES.DATA_MANAGER,
     ROLES.SITE_COORDINATOR, ROLES.MONITOR,
   ],
+  '/subjects/:id': [
+    // Subject detail — same roles as subjects list
+    ROLES.ADMIN, ROLES.STUDY_ADMIN, ROLES.DATA_MANAGER,
+    ROLES.SITE_COORDINATOR, ROLES.MONITOR, ROLES.SAFETY_OFFICER,
+  ],
   '/queries': [
     // Queries list (read) — IsReadOnlyOrDataManager → any authenticated user can read
     ROLES.ADMIN, ROLES.STUDY_ADMIN, ROLES.DATA_MANAGER,
@@ -65,13 +70,17 @@ export const ROUTE_ACCESS = {
     // Audit — IsAuditor → only auditor, study_admin, admin
     ROLES.ADMIN, ROLES.STUDY_ADMIN, ROLES.AUDITOR,
   ],
+  '/integrations': [
+    // Integration status — admin only
+    ROLES.ADMIN, ROLES.STUDY_ADMIN,
+  ],
 }
 
 // ── Sidebar navigation per role ──
 // Which nav items appear for each role
 export const SIDEBAR_ACCESS = {
-  [ROLES.ADMIN]: ['/', '/studies', '/subjects', '/queries', '/safety', '/lab', '/audit'],
-  [ROLES.STUDY_ADMIN]: ['/', '/studies', '/subjects', '/queries', '/safety', '/lab', '/audit'],
+  [ROLES.ADMIN]: ['/', '/studies', '/subjects', '/queries', '/safety', '/lab', '/audit', '/integrations'],
+  [ROLES.STUDY_ADMIN]: ['/', '/studies', '/subjects', '/queries', '/safety', '/lab', '/audit', '/integrations'],
   [ROLES.DATA_MANAGER]: ['/', '/studies', '/subjects', '/queries'],
   [ROLES.SITE_COORDINATOR]: ['/', '/studies', '/subjects', '/queries'],
   [ROLES.MONITOR]: ['/', '/studies', '/subjects', '/queries'],
@@ -102,9 +111,21 @@ export const ACTION_PERMISSIONS = {
 
   // Safety actions
   CREATE_AE: [ROLES.ADMIN, ROLES.STUDY_ADMIN, ROLES.SAFETY_OFFICER],
+  GENERATE_CIOMS: [ROLES.ADMIN, ROLES.STUDY_ADMIN, ROLES.SAFETY_OFFICER],
 
   // Lab actions
   IMPORT_LAB_CSV: [ROLES.ADMIN, ROLES.STUDY_ADMIN, ROLES.LAB_MANAGER],
+
+  // Export actions
+  EXPORT_CSV: [ROLES.ADMIN, ROLES.STUDY_ADMIN, ROLES.DATA_MANAGER],
+  EXPORT_ODM: [ROLES.ADMIN, ROLES.STUDY_ADMIN, ROLES.DATA_MANAGER],
+  GENERATE_QUALITY_REPORT: [ROLES.ADMIN, ROLES.STUDY_ADMIN, ROLES.DATA_MANAGER],
+
+  // Milestone actions
+  MANAGE_MILESTONES: [ROLES.ADMIN, ROLES.STUDY_ADMIN, ROLES.OPS_MANAGER],
+
+  // Integration actions
+  VIEW_INTEGRATIONS: [ROLES.ADMIN, ROLES.STUDY_ADMIN],
 
   // Audit actions
   EXPORT_AUDIT: [ROLES.ADMIN, ROLES.STUDY_ADMIN, ROLES.AUDITOR],
@@ -140,7 +161,7 @@ export function canPerformAction(userRoles, isSuperuser, actionKey) {
  */
 export function getSidebarRoutes(userRoles, isSuperuser) {
   if (isSuperuser) {
-    return ['/', '/studies', '/subjects', '/queries', '/safety', '/lab', '/audit']
+    return ['/', '/studies', '/subjects', '/queries', '/safety', '/lab', '/audit', '/integrations']
   }
 
   const routes = new Set()
@@ -162,4 +183,5 @@ export const ROUTE_LABELS = {
   '/safety': 'Safety',
   '/lab': 'Laboratory',
   '/audit': 'Audit Trail',
+  '/integrations': 'Integrations',
 }

@@ -43,6 +43,9 @@ export const API = {
   CONTRACTS: 'ops/contracts/',
   TRAINING_RECORDS: 'ops/training-records/',
   MILESTONES: 'ops/milestones/',
+
+  // ── Integrations ──
+  INTEGRATIONS_STATUS: 'integrations/status/',
 }
 
 // Keycloak token endpoint (goes through NGINX proxy → Keycloak:8080)

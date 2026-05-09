@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { FiSearch, FiPlus } from 'react-icons/fi'
+import { Link } from 'react-router-dom'
 import { useSubjects, useEnrollSubject, useCreateSubject, useStudies, useSites } from '../api/queries'
 import StatusBadge from '../components/StatusBadge'
 import LoadingSpinner from '../components/LoadingSpinner'
@@ -126,7 +127,9 @@ export default function SubjectsPage() {
               <tbody className="divide-y divide-border">
                 {subjects.map(s => (
                   <tr key={s.id} className="hover:bg-card-hover transition-colors">
-                    <td className="px-5 py-3 font-medium text-slate-700">{s.subject_identifier}</td>
+                    <td className="px-5 py-3 font-medium">
+                      <Link to={`/subjects/${s.id}`} className="text-primary-600 hover:text-primary-700 font-medium">{s.subject_identifier}</Link>
+                    </td>
                     <td className="px-5 py-3 text-slate-600">{s.study_protocol}</td>
                     <td className="px-5 py-3 text-slate-600">{s.site_code}</td>
                     <td className="px-5 py-3"><StatusBadge status={s.status} /></td>

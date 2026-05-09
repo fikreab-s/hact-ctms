@@ -1,14 +1,12 @@
 import { FiLogOut, FiBell, FiSearch } from 'react-icons/fi'
-import { useNavigate } from 'react-router-dom'
 import useAuthStore from '../store/authStore'
 
 export default function TopBar() {
   const { user, roles, logout } = useAuthStore()
-  const navigate = useNavigate()
 
   const handleLogout = () => {
+    // authStore.logout() clears state and redirects to Keycloak logout
     logout()
-    navigate('/login', { replace: true })
   }
 
   const initials = user
