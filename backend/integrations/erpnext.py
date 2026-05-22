@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 ERPNEXT_URL = getattr(settings, "ERPNEXT_URL", "http://erpnext:8000")
 API_KEY = getattr(settings, "ERPNEXT_API_KEY", "")
 API_SECRET = getattr(settings, "ERPNEXT_API_SECRET", "")
-ERPNEXT_SITE_NAME = "hact.localhost"
+ERPNEXT_SITE_NAME = "hact.local"
 
 
 def get_headers():
@@ -22,22 +22,19 @@ def get_headers():
 
 
 def check_availability() -> bool:
-    """Check if ERPNext API is available and credentials are valid."""
-    if not API_KEY or not API_SECRET:
-        logger.warning("ERPNext API key/secret not configured in .env")
-        return False
-
+    """Check if ERPNext API is available."""
     try:
+        # Simple ping — works without API credentials
         response = requests.get(
             f"{ERPNEXT_URL}/api/method/ping",
-            headers=get_headers(),
+            headers={"Host": ERPNEXT_SITE_NAME},
             timeout=10,
         )
         if response.status_code == 200:
             logger.info("ERPNext is reachable (status=200)")
             return True
         else:
-            logger.warning("ERPNext responded with status %s: %s", response.status_code, response.text[:200])
+            logger.warning("ERPNext responded with status %s", response.status_code)
             return False
     except RequestException as e:
         logger.error("ERPNext connection failed: %s", str(e))

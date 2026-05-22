@@ -1,8 +1,8 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, useLocation } from 'react-router-dom'
 import {
   FiHome, FiFolder, FiUsers, FiMessageSquare,
   FiAlertTriangle, FiActivity, FiFileText,
-  FiShield, FiServer, FiX,
+  FiShield, FiServer, FiX, FiChevronDown,
 } from 'react-icons/fi'
 import useAuthStore from '../store/authStore'
 import { getSidebarRoutes } from '../auth/roleConfig'
@@ -16,12 +16,20 @@ const ALL_NAV_ITEMS = [
   { to: '/safety', icon: FiAlertTriangle, label: 'Safety', section: 'Safety & Lab' },
   { to: '/lab', icon: FiActivity, label: 'Laboratory', section: 'Safety & Lab' },
   { to: '/audit', icon: FiFileText, label: 'Audit Trail', section: 'Admin' },
-  { to: '/integrations', icon: FiServer, label: 'Integrations', section: 'Admin' },
+  { to: '/integrations', icon: FiServer, label: 'Integrations', section: 'Admin',
+    children: [
+      { to: '/integrations/openclinica', label: '📋 OpenClinica' },
+      { to: '/integrations/senaite', label: '🔬 SENAITE LIMS' },
+      { to: '/integrations/nextcloud', label: '📁 Nextcloud eTMF' },
+      { to: '/integrations/erpnext', label: '📊 ERPNext' },
+    ],
+  },
 ]
 
 export default function Sidebar({ isOpen, onClose }) {
   const { user, roles } = useAuthStore()
   const isSuperuser = user?.is_superuser || false
+  const location = useLocation()
 
   // Get routes this user can access
   const allowedRoutes = getSidebarRoutes(roles, isSuperuser)
@@ -61,7 +69,7 @@ export default function Sidebar({ isOpen, onClose }) {
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
         lg:translate-x-0
       `}>
-        {/* Logo + mobile close */}
+        {/* Logo + mobile close button */}
         <div className="h-16 flex items-center justify-between px-5 border-b border-white/10">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-primary-600 flex items-center justify-center">
@@ -85,25 +93,54 @@ export default function Sidebar({ isOpen, onClose }) {
                 {sectionTitle}
               </p>
               <ul className="space-y-0.5">
-                {sectionMap[sectionTitle].map((item) => (
-                  <li key={item.to}>
-                    <NavLink
-                      to={item.to}
-                      end={item.to === '/'}
-                      onClick={onClose}
-                      className={({ isActive }) =>
-                        `flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-150 ${
-                          isActive
-                            ? 'bg-sidebar-active text-sidebar-text-active font-medium shadow-lg shadow-primary-600/20'
-                            : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white'
-                        }`
-                      }
-                    >
-                      <item.icon className="w-[18px] h-[18px] shrink-0" />
-                      <span>{item.label}</span>
-                    </NavLink>
-                  </li>
-                ))}
+                {sectionMap[sectionTitle].map((item) => {
+                  const isParentActive = location.pathname === item.to || location.pathname.startsWith(item.to + '/')
+                  const showChildren = item.children && isParentActive
+
+                  return (
+                    <li key={item.to}>
+                      <NavLink
+                        to={item.to}
+                        end={!!item.children || item.to === '/'}
+                        onClick={onClose}
+                        className={({ isActive }) =>
+                          `flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-150 ${
+                            isActive || (item.children && isParentActive)
+                              ? 'bg-sidebar-active text-sidebar-text-active font-medium shadow-lg shadow-primary-600/20'
+                              : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white'
+                          }`
+                        }
+                      >
+                        <item.icon className="w-[18px] h-[18px] shrink-0" />
+                        <span className="flex-1">{item.label}</span>
+                        {item.children && (
+                          <FiChevronDown className={`w-3.5 h-3.5 transition-transform ${showChildren ? 'rotate-180' : ''}`} />
+                        )}
+                      </NavLink>
+                      {showChildren && (
+                        <ul className="ml-6 mt-1 space-y-0.5 border-l border-white/10 pl-3">
+                          {item.children.map((child) => (
+                            <li key={child.to}>
+                              <NavLink
+                                to={child.to}
+                                onClick={onClose}
+                                className={({ isActive }) =>
+                                  `block px-3 py-1.5 rounded-md text-xs transition-all duration-150 ${
+                                    isActive
+                                      ? 'text-white bg-white/10 font-medium'
+                                      : 'text-sidebar-text/70 hover:text-white hover:bg-white/5'
+                                  }`
+                                }
+                              >
+                                {child.label}
+                              </NavLink>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </li>
+                  )
+                })}
               </ul>
             </div>
           ))}

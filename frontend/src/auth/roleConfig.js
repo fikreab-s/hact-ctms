@@ -140,7 +140,12 @@ export const ACTION_PERMISSIONS = {
 export function canAccessRoute(userRoles, isSuperuser, routePath) {
   if (isSuperuser) return true
   // Match exact or parameterized route
-  const allowedRoles = ROUTE_ACCESS[routePath]
+  let allowedRoles = ROUTE_ACCESS[routePath]
+  // Fallback: check parent route for sub-routes (e.g. /integrations/openclinica → /integrations)
+  if (!allowedRoles) {
+    const parentPath = '/' + routePath.split('/').filter(Boolean)[0]
+    allowedRoles = ROUTE_ACCESS[parentPath]
+  }
   if (!allowedRoles) return true // Unknown route = allow (defensive)
   return userRoles.some(role => allowedRoles.includes(role))
 }

@@ -1,6 +1,17 @@
-import { FiServer, FiRefreshCw, FiCheckCircle, FiXCircle, FiClock } from 'react-icons/fi'
+import { FiServer, FiRefreshCw, FiCheckCircle, FiXCircle, FiClock, FiExternalLink } from 'react-icons/fi'
 import { useIntegrationStatus } from '../api/queries'
 import LoadingSpinner from '../components/LoadingSpinner'
+
+// Build external URLs based on current origin (all go through nginx proxy)
+const getServiceUrls = () => {
+  const origin = window.location.origin
+  return {
+    openclinica: { url: `${origin}/OpenClinica/`, loginHint: 'root / Admin@2026!' },
+    senaite:     { url: `${origin}/senaite/`,     loginHint: 'admin / admin' },
+    erpnext:     { url: `${origin}/erpnext/`,     loginHint: 'Administrator' },
+    nextcloud:   { url: `${origin}/nextcloud/`,   loginHint: 'admin / Admin@2026!' },
+  }
+}
 
 const SERVICE_META = {
   openclinica: { label: 'OpenClinica CE', desc: 'Electronic Data Capture (EDC)', color: 'blue', icon: '📋' },
@@ -49,6 +60,8 @@ export default function IntegrationStatusPage() {
           const svc = data?.[key]
           const status = svc?.status || 'unavailable'
           const isHealthy = status === 'healthy'
+          const urls = getServiceUrls()
+          const svcUrl = urls[key]
 
           return (
             <div key={key}
@@ -66,16 +79,39 @@ export default function IntegrationStatusPage() {
                 </div>
                 <StatusIcon status={status} />
               </div>
-              <div className="mt-4 flex items-center gap-2">
-                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                  isHealthy ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
-                }`}>
-                  {isHealthy ? 'Connected' : 'Offline'}
-                </span>
-                {svc?.studies_count != null && (
-                  <span className="text-xs text-slate-500">{svc.studies_count} studies</span>
+              <div className="mt-4 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    isHealthy ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
+                  }`}>
+                    {isHealthy ? 'Connected' : 'Offline'}
+                  </span>
+                  {svc?.version && (
+                    <span className="text-xs text-slate-400">v{svc.version}</span>
+                  )}
+                </div>
+                {svcUrl && (
+                  <a
+                    href={svcUrl.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
+                      isHealthy
+                        ? 'bg-primary-50 text-primary-700 hover:bg-primary-100 border border-primary-200'
+                        : 'bg-slate-50 text-slate-400 border border-slate-200 cursor-not-allowed pointer-events-none'
+                    }`}
+                    title={isHealthy ? `Open ${meta.label}` : `${meta.label} is offline`}
+                  >
+                    <FiExternalLink className="w-3.5 h-3.5" />
+                    Open
+                  </a>
                 )}
               </div>
+              {isHealthy && svcUrl?.loginHint && (
+                <p className="mt-2 text-xs text-slate-400">
+                  Login: {svcUrl.loginHint}
+                </p>
+              )}
             </div>
           )
         })}
