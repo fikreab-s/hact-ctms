@@ -45,7 +45,7 @@ export default function QueriesPage() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Queries</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-slate-800 tracking-tight">Queries</h1>
         <p className="text-sm text-slate-500 mt-0.5">{totalCount} data queries</p>
       </div>
 

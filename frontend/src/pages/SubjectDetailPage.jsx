@@ -49,9 +49,9 @@ export default function SubjectDetailPage() {
         <Link to="/subjects" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-primary-600 mb-3">
           <FiArrowLeft className="w-4 h-4" /> Back to Subjects
         </Link>
-        <div className="flex items-start justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-slate-800 tracking-tight flex items-center gap-3">
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-800 tracking-tight flex items-center gap-3">
               <FiUser className="w-6 h-6 text-primary-500" />
               {subject.subject_identifier}
             </h1>
@@ -59,7 +59,7 @@ export default function SubjectDetailPage() {
               {subject.study_protocol} — {subject.site_name || subject.site_code}
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <StatusBadge status={subject.status} className="text-sm px-3 py-1" />
             {can('WITHDRAW_SUBJECT') && subject.status === 'enrolled' && (
               <button onClick={() => setShowWithdraw(true)}

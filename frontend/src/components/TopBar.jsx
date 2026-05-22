@@ -1,7 +1,7 @@
-import { FiLogOut, FiBell, FiSearch } from 'react-icons/fi'
+import { FiLogOut, FiBell, FiSearch, FiMenu } from 'react-icons/fi'
 import useAuthStore from '../store/authStore'
 
-export default function TopBar() {
+export default function TopBar({ onMenuToggle }) {
   const { user, roles, logout } = useAuthStore()
 
   const handleLogout = () => {
@@ -17,20 +17,32 @@ export default function TopBar() {
   const roleLabel = primaryRole.replace(/_/g, ' ')
 
   return (
-    <header className="h-16 bg-card border-b border-border flex items-center justify-between px-6 sticky top-0 z-30">
-      {/* Search */}
-      <div className="relative max-w-md w-full">
-        <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-        <input
-          type="text"
-          placeholder="Search studies, subjects, queries..."
-          className="w-full pl-9 pr-4 py-2 bg-surface border border-border rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-400 transition-all"
-          id="global-search"
-        />
+    <header className="h-16 bg-card border-b border-border flex items-center justify-between px-4 sm:px-6 sticky top-0 z-30">
+      {/* Left: hamburger + search */}
+      <div className="flex items-center gap-3 flex-1 min-w-0">
+        {/* Mobile hamburger */}
+        <button
+          onClick={onMenuToggle}
+          className="lg:hidden p-2 text-slate-500 hover:text-slate-700 hover:bg-surface rounded-lg transition-colors shrink-0"
+          id="menu-toggle-btn"
+        >
+          <FiMenu className="w-5 h-5" />
+        </button>
+
+        {/* Search — hidden on very small screens */}
+        <div className="relative max-w-md w-full hidden sm:block">
+          <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+          <input
+            type="text"
+            placeholder="Search studies, subjects, queries..."
+            className="w-full pl-9 pr-4 py-2 bg-surface border border-border rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-400 transition-all"
+            id="global-search"
+          />
+        </div>
       </div>
 
       {/* Right side */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 sm:gap-4 shrink-0">
         {/* Notifications */}
         <button className="relative p-2 text-slate-500 hover:text-slate-700 hover:bg-surface rounded-lg transition-colors" id="notifications-btn">
           <FiBell className="w-5 h-5" />
@@ -38,11 +50,11 @@ export default function TopBar() {
         </button>
 
         {/* User avatar + info */}
-        <div className="flex items-center gap-3 pl-4 border-l border-border">
+        <div className="flex items-center gap-2 sm:gap-3 pl-2 sm:pl-4 border-l border-border">
           <div className="w-8 h-8 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-xs font-semibold">
             {initials}
           </div>
-          <div className="hidden sm:block">
+          <div className="hidden md:block">
             <p className="text-sm font-medium text-slate-800 leading-tight">
               {user?.first_name} {user?.last_name}
             </p>

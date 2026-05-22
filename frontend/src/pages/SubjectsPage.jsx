@@ -73,15 +73,15 @@ export default function SubjectsPage() {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Subjects</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-800 tracking-tight">Subjects</h1>
           <p className="text-sm text-slate-500 mt-0.5">{totalCount} subjects across all studies</p>
         </div>
         {can('CREATE_SUBJECT') && (
           <button
             onClick={() => setShowCreate(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-lg transition-colors shadow-sm"
+            className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-lg transition-colors shadow-sm self-start sm:self-auto"
             id="create-subject-btn"
           >
             <FiPlus className="w-4 h-4" /> New Subject
@@ -90,7 +90,7 @@ export default function SubjectsPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
         <div className="relative flex-1 max-w-sm">
           <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
           <input type="text" placeholder="Search by ID or screening number..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(1) }}
