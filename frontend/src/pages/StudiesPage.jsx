@@ -43,15 +43,15 @@ export default function StudiesPage() {
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Studies</h1>
+          <h1 className="text-xl sm:text-xl sm:text-2xl font-bold text-slate-800 tracking-tight">Studies</h1>
           <p className="text-sm text-slate-500 mt-0.5">{totalCount} studies registered</p>
         </div>
         {can('CREATE_STUDY') && (
           <button
             onClick={() => setShowCreate(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-lg transition-colors shadow-sm"
+            className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-lg transition-colors shadow-sm self-start sm:self-auto"
             id="create-study-btn"
           >
             <FiPlus className="w-4 h-4" /> New Study
@@ -60,7 +60,7 @@ export default function StudiesPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
         <div className="relative flex-1 max-w-sm">
           <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
           <input

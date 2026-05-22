@@ -38,9 +38,9 @@ export default function IntegrationStatusPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800 tracking-tight flex items-center gap-2">
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-800 tracking-tight flex items-center gap-2">
             <FiServer className="w-6 h-6 text-primary-500" /> Integration Status
           </h1>
           <p className="text-sm text-slate-500 mt-0.5">
@@ -134,7 +134,7 @@ export default function IntegrationStatusPage() {
             <div key={svc.label} className="px-5 py-3 flex items-center justify-between">
               <div>
                 <span className="text-sm font-medium text-slate-700">{svc.label}</span>
-                <span className="text-xs text-slate-500 ml-2">— {svc.desc}</span>
+                <span className="text-xs text-slate-500 ml-2 hidden sm:inline">— {svc.desc}</span>
               </div>
               <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />

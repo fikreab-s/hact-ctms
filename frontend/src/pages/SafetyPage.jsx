@@ -64,14 +64,14 @@ export default function SafetyPage() {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Safety & Adverse Events</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-800 tracking-tight">Safety & Adverse Events</h1>
           <p className="text-sm text-slate-500 mt-0.5">{totalCount} adverse events recorded</p>
         </div>
         {can('CREATE_AE') && (
           <button onClick={() => setShowCreate(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white text-sm font-medium rounded-lg transition-colors shadow-sm"
+            className="flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white text-sm font-medium rounded-lg transition-colors shadow-sm self-start sm:self-auto"
             id="create-ae-btn">
             <FiPlus className="w-4 h-4" /> Report AE
           </button>

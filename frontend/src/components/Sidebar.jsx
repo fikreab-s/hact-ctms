@@ -2,7 +2,7 @@ import { NavLink, useLocation } from 'react-router-dom'
 import {
   FiHome, FiFolder, FiUsers, FiMessageSquare,
   FiAlertTriangle, FiActivity, FiFileText,
-  FiShield, FiServer, FiChevronDown,
+  FiShield, FiServer, FiX, FiChevronDown,
 } from 'react-icons/fi'
 import useAuthStore from '../store/authStore'
 import { getSidebarRoutes } from '../auth/roleConfig'
@@ -26,7 +26,7 @@ const ALL_NAV_ITEMS = [
   },
 ]
 
-export default function Sidebar() {
+export default function Sidebar({ isOpen, onClose }) {
   const { user, roles } = useAuthStore()
   const isSuperuser = user?.is_superuser || false
   const location = useLocation()
@@ -53,85 +53,108 @@ export default function Sidebar() {
   const roleLabel = primaryRole.replace(/_/g, ' ')
 
   return (
-    <aside className="fixed left-0 top-0 bottom-0 w-64 bg-sidebar flex flex-col z-40">
-      {/* Logo */}
-      <div className="h-16 flex items-center gap-3 px-5 border-b border-white/10">
-        <div className="w-8 h-8 rounded-lg bg-primary-600 flex items-center justify-center">
-          <FiShield className="w-4 h-4 text-white" />
-        </div>
-        <div>
-          <span className="text-white font-semibold text-sm tracking-tight">HACT CTMS</span>
-          <span className="block text-[10px] text-sidebar-text leading-tight">Clinical Trials</span>
-        </div>
-      </div>
+    <>
+      {/* Mobile overlay */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
+          onClick={onClose}
+        />
+      )}
 
-      {/* Navigation — dynamically filtered by role */}
-      <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-6">
-        {sections.map((sectionTitle) => (
-          <div key={sectionTitle}>
-            <p className="px-3 mb-2 text-[11px] font-semibold uppercase tracking-wider text-sidebar-text/60">
-              {sectionTitle}
-            </p>
-            <ul className="space-y-0.5">
-              {sectionMap[sectionTitle].map((item) => {
-                const isParentActive = location.pathname === item.to || location.pathname.startsWith(item.to + '/')
-                const showChildren = item.children && isParentActive
-
-                return (
-                  <li key={item.to}>
-                    <NavLink
-                      to={item.to}
-                      end={!!item.children || item.to === '/'}
-                      className={({ isActive }) =>
-                        `flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-150 ${
-                          isActive || (item.children && isParentActive)
-                            ? 'bg-sidebar-active text-sidebar-text-active font-medium shadow-lg shadow-primary-600/20'
-                            : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white'
-                        }`
-                      }
-                    >
-                      <item.icon className="w-[18px] h-[18px] shrink-0" />
-                      <span className="flex-1">{item.label}</span>
-                      {item.children && (
-                        <FiChevronDown className={`w-3.5 h-3.5 transition-transform ${showChildren ? 'rotate-180' : ''}`} />
-                      )}
-                    </NavLink>
-                    {showChildren && (
-                      <ul className="ml-6 mt-1 space-y-0.5 border-l border-white/10 pl-3">
-                        {item.children.map((child) => (
-                          <li key={child.to}>
-                            <NavLink
-                              to={child.to}
-                              className={({ isActive }) =>
-                                `block px-3 py-1.5 rounded-md text-xs transition-all duration-150 ${
-                                  isActive
-                                    ? 'text-white bg-white/10 font-medium'
-                                    : 'text-sidebar-text/70 hover:text-white hover:bg-white/5'
-                                }`
-                              }
-                            >
-                              {child.label}
-                            </NavLink>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </li>
-                )
-              })}
-            </ul>
+      {/* Sidebar panel */}
+      <aside className={`
+        fixed left-0 top-0 bottom-0 w-64 bg-sidebar flex flex-col z-50
+        transition-transform duration-300 ease-in-out
+        ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+        lg:translate-x-0
+      `}>
+        {/* Logo + mobile close button */}
+        <div className="h-16 flex items-center justify-between px-5 border-b border-white/10">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-primary-600 flex items-center justify-center">
+              <FiShield className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <span className="text-white font-semibold text-sm tracking-tight">HACT CTMS</span>
+              <span className="block text-[10px] text-sidebar-text leading-tight">Clinical Trials</span>
+            </div>
           </div>
-        ))}
-      </nav>
-
-      {/* Bottom: role badge + version */}
-      <div className="p-4 border-t border-white/10 space-y-2">
-        <div className="flex items-center gap-2 px-2">
-          <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-          <span className="text-[11px] text-sidebar-text capitalize">{roleLabel}</span>
+          <button onClick={onClose} className="lg:hidden p-1 text-sidebar-text hover:text-white rounded">
+            <FiX className="w-5 h-5" />
+          </button>
         </div>
-        <p className="text-[11px] text-sidebar-text/50 text-center">v0.1.0 — Day 5 Build</p>
-      </div>
-    </aside>
+
+        {/* Navigation — dynamically filtered by role */}
+        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-6">
+          {sections.map((sectionTitle) => (
+            <div key={sectionTitle}>
+              <p className="px-3 mb-2 text-[11px] font-semibold uppercase tracking-wider text-sidebar-text/60">
+                {sectionTitle}
+              </p>
+              <ul className="space-y-0.5">
+                {sectionMap[sectionTitle].map((item) => {
+                  const isParentActive = location.pathname === item.to || location.pathname.startsWith(item.to + '/')
+                  const showChildren = item.children && isParentActive
+
+                  return (
+                    <li key={item.to}>
+                      <NavLink
+                        to={item.to}
+                        end={!!item.children || item.to === '/'}
+                        onClick={onClose}
+                        className={({ isActive }) =>
+                          `flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-150 ${
+                            isActive || (item.children && isParentActive)
+                              ? 'bg-sidebar-active text-sidebar-text-active font-medium shadow-lg shadow-primary-600/20'
+                              : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white'
+                          }`
+                        }
+                      >
+                        <item.icon className="w-[18px] h-[18px] shrink-0" />
+                        <span className="flex-1">{item.label}</span>
+                        {item.children && (
+                          <FiChevronDown className={`w-3.5 h-3.5 transition-transform ${showChildren ? 'rotate-180' : ''}`} />
+                        )}
+                      </NavLink>
+                      {showChildren && (
+                        <ul className="ml-6 mt-1 space-y-0.5 border-l border-white/10 pl-3">
+                          {item.children.map((child) => (
+                            <li key={child.to}>
+                              <NavLink
+                                to={child.to}
+                                onClick={onClose}
+                                className={({ isActive }) =>
+                                  `block px-3 py-1.5 rounded-md text-xs transition-all duration-150 ${
+                                    isActive
+                                      ? 'text-white bg-white/10 font-medium'
+                                      : 'text-sidebar-text/70 hover:text-white hover:bg-white/5'
+                                  }`
+                                }
+                              >
+                                {child.label}
+                              </NavLink>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </li>
+                  )
+                })}
+              </ul>
+            </div>
+          ))}
+        </nav>
+
+        {/* Bottom: role badge + version */}
+        <div className="p-4 border-t border-white/10 space-y-2">
+          <div className="flex items-center gap-2 px-2">
+            <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-[11px] text-sidebar-text capitalize">{roleLabel}</span>
+          </div>
+          <p className="text-[11px] text-sidebar-text/50 text-center">v0.1.0 — Day 5 Build</p>
+        </div>
+      </aside>
+    </>
   )
 }

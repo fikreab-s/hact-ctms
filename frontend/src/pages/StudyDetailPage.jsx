@@ -119,12 +119,12 @@ export default function StudyDetailPage() {
         <Link to="/studies" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-primary-600 mb-3">
           <FiArrowLeft className="w-4 h-4" /> Back to Studies
         </Link>
-        <div className="flex items-start justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-slate-800 tracking-tight">{study.protocol_number}</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-800 tracking-tight">{study.protocol_number}</h1>
             <p className="text-sm text-slate-500 mt-0.5">{study.name}</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <StatusBadge status={study.status} className="text-sm px-3 py-1" />
             {can('TRANSITION_STUDY') && nextStatus && (
               <button

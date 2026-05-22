@@ -63,7 +63,7 @@ export default function DashboardPage() {
     <div className="space-y-6">
       {/* Greeting */}
       <div>
-        <h1 className="text-2xl font-bold text-slate-800 tracking-tight">
+        <h1 className="text-xl sm:text-xl sm:text-2xl font-bold text-slate-800 tracking-tight">
           Welcome back, {user?.first_name || user?.username}
         </h1>
         <p className="text-sm text-slate-500 mt-1">
@@ -72,7 +72,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
         <StatCard title="Active Studies" value={totalStudies} icon={FiFolder} variant="primary" subtitle="Total registered" />
         <StatCard title="Subjects" value={totalSubjects} icon={FiUsers} variant="info" subtitle={`${enrolledCount} enrolled`} />
         <StatCard title="Open Queries" value={openQueries} icon={FiMessageSquare} variant={openQueries > 0 ? 'danger' : 'success'} subtitle="Requiring attention" />
@@ -81,7 +81,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Enrollment Bar Chart */}
         <div className="bg-card rounded-xl border border-border p-5 shadow-sm">
           <h3 className="text-sm font-semibold text-slate-700 mb-4">Enrollment by Study</h3>
@@ -163,7 +163,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Data Quality + System Status Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Data Quality Score */}
         <div className="bg-card rounded-xl border border-border p-5 shadow-sm">
           <div className="flex items-center justify-between mb-4">
