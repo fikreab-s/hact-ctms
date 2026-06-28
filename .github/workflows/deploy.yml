@@ -1,0 +1,111 @@
+# =============================================================================
+# HACT CTMS — Deploy to Production
+# Triggers on push to main branch
+# Builds frontend, SSHs into GCP VM, deploys latest code
+# =============================================================================
+
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main]
+
+  # Allow manual trigger from GitHub UI
+  workflow_dispatch:
+
+# Prevent concurrent deployments
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to ctms.hacts.org
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      # -----------------------------------------------------------------------
+      # 1. Checkout code
+      # -----------------------------------------------------------------------
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # -----------------------------------------------------------------------
+      # 2. Build frontend
+      # -----------------------------------------------------------------------
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+
+      # -----------------------------------------------------------------------
+      # 3. Authenticate with Google Cloud
+      # -----------------------------------------------------------------------
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      # -----------------------------------------------------------------------
+      # 4. Upload frontend build to server
+      # -----------------------------------------------------------------------
+      - name: Upload frontend dist
+        run: |
+          gcloud compute scp --recurse \
+            frontend/dist \
+            fikreab@${{ secrets.VM_INSTANCE }}:/home/fikreab/hact-ctms/frontend/dist \
+            --zone=${{ secrets.GCP_ZONE }} \
+            --project=${{ secrets.GCP_PROJECT_ID }}
+
+      # -----------------------------------------------------------------------
+      # 5. Deploy on server
+      # -----------------------------------------------------------------------
+      - name: Deploy latest code
+        run: |
+          gcloud compute ssh fikreab@${{ secrets.VM_INSTANCE }} \
+            --zone=${{ secrets.GCP_ZONE }} \
+            --project=${{ secrets.GCP_PROJECT_ID }} \
+            --command="
+              cd /home/fikreab/hact-ctms &&
+              echo '=== Pulling latest code ===' &&
+              git pull origin main &&
+              echo '=== Rebuilding Docker images ===' &&
+              sudo docker compose build django-api celery-worker celery-beat &&
+              echo '=== Restarting containers ===' &&
+              sudo docker compose up -d &&
+              echo '=== Collecting static files ===' &&
+              sudo docker compose exec -T django-api python manage.py collectstatic --noinput &&
+              echo '=== Running migrations ===' &&
+              sudo docker compose exec -T django-api python manage.py migrate --noinput &&
+              echo '=== Reloading NGINX ===' &&
+              sudo docker compose exec -T nginx nginx -s reload &&
+              echo '=== Deploy complete ==='
+            "
+
+      # -----------------------------------------------------------------------
+      # 6. Verify deployment
+      # -----------------------------------------------------------------------
+      - name: Health check
+        run: |
+          sleep 10
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://ctms.hacts.org/api/health/)
+          echo "Health check status: $HTTP_STATUS"
+          if [ "$HTTP_STATUS" != "200" ]; then
+            echo "::error::Health check failed with status $HTTP_STATUS"
+            exit 1
+          fi
+          echo "✅ Deployment verified — ctms.hacts.org is healthy"

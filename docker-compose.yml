@@ -14,11 +14,14 @@ services:
     container_name: hact-nginx
     ports:
       - "80:80"
+      - "443:443"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - ./frontend/dist:/var/www/frontend:ro
       - static_files:/var/www/static:ro
       - media_files:/var/www/media:ro
+      - certbot_conf:/etc/letsencrypt:ro
+      - certbot_www:/var/www/certbot:ro
     depends_on:
       django-api:
         condition: service_healthy
@@ -623,6 +626,11 @@ volumes:
   # SENAITE (profile: senaite)
   senaite_data:
     name: hact-senaite-data
+  # Certbot / Let's Encrypt
+  certbot_conf:
+    name: hact-certbot-conf
+  certbot_www:
+    name: hact-certbot-www
 
 # =============================================================================
 # Networks
