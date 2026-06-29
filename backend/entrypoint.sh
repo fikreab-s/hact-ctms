@@ -46,9 +46,13 @@ if echo "$@" | grep -q "gunicorn"; then
 
     # Create superuser if DJANGO_SUPERUSER_* env vars are set
     if [ -n "$DJANGO_SUPERUSER_USERNAME" ]; then
-        echo "[3.5/4] Creating superuser..."
+        echo "[3.5/5] Creating superuser..."
         python manage.py createsuperuser --noinput 2>/dev/null || echo "  Superuser already exists."
     fi
+
+    # Seed default users (hact-user, hact-admin) for Keycloak SSO login
+    echo "[4/5] Seeding default users..."
+    python manage.py seed_default_users
 else
     echo "[2/4] Skipping migrations (not gunicorn process)."
     echo "[3/4] Skipping collectstatic (not gunicorn process)."
