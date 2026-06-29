@@ -629,8 +629,10 @@ volumes:
   # Certbot / Let's Encrypt
   certbot_conf:
     name: hact-certbot-conf
+    external: true
   certbot_www:
     name: hact-certbot-www
+    external: true
 
 # =============================================================================
 # Networks
