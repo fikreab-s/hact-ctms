@@ -38,18 +38,21 @@ export default function SafetyPage() {
   const handleCreate = async (e) => {
     e.preventDefault()
     const form = new FormData(e.target)
+    const subjectId = parseInt(form.get('subject'))
+    // Derive study from the selected subject
+    const selectedSubject = subjects.find(s => s.id === subjectId)
     try {
       await createAE.mutateAsync({
-        subject: parseInt(form.get('subject')),
+        subject: subjectId,
+        study: selectedSubject?.study || selectedSubject?.study_id,
         ae_term: form.get('ae_term'),
-        onset_date: form.get('onset_date'),
+        start_date: form.get('onset_date'),
         severity: form.get('severity'),
-        is_serious: form.get('is_serious') === 'true',
-        seriousness_criteria: form.get('seriousness_criteria') || '',
+        serious: form.get('is_serious') === 'true',
+        serious_criteria: form.get('seriousness_criteria') || '',
         causality: form.get('causality'),
         outcome: form.get('outcome'),
-        action_taken: form.get('action_taken'),
-        description: form.get('description'),
+        action_taken: form.get('action_taken') || '',
       })
       toast.success('Adverse event reported successfully.')
       setShowCreate(false)

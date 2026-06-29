@@ -46,6 +46,23 @@ export const API = {
 
   // ── Integrations ──
   INTEGRATIONS_STATUS: 'integrations/status/',
+
+  // ── Mobile EDC (standalone CRF data entry) ──
+  EDC_SUBJECTS: 'edc/subjects/',
+  EDC_ENROLL: 'edc/enroll/',
+  EDC_FORMS: 'edc/forms/',
+  EDC_SUBMIT: 'edc/submit/',
+  EDC_FORM_INSTANCES: 'edc/form-instances/',
+  EDC_VERIFY_SIGNATURE: 'edc/verify-signature/',
+  EDC_SYNC_STATUS: 'edc/sync-status/',
+
+  // ── Risk-Based Monitoring (RBM) ──
+  MONITORING_SITE_RISKS: 'monitoring/site-risk-scores/',
+  MONITORING_OVERVIEW: 'monitoring/study-overview/',
+
+  // ── SAE Expedited Reporting ──
+  SAE_TIMELINE: 'safety/sae-timeline/',
+  SAE_MARK_REPORTED: 'safety/sae/',  // + {id}/mark-reported/
 }
 
 // Keycloak token endpoint (goes through NGINX proxy → Keycloak:8080)

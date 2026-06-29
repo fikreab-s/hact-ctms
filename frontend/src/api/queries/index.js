@@ -265,3 +265,49 @@ export function useUpdateMilestone() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['milestones'] }),
   })
 }
+
+// ── Risk-Based Monitoring (RBM) ──
+export function useSiteRiskScores(studyId) {
+  return useQuery({
+    queryKey: ['site-risk-scores', studyId],
+    queryFn: () =>
+      apiClient.get(API.MONITORING_SITE_RISKS, {
+        params: studyId ? { study_id: studyId } : {},
+      }).then(r => r.data),
+    refetchInterval: 120000, // Refresh every 2 minutes
+  })
+}
+
+export function useStudyOverview(studyId) {
+  return useQuery({
+    queryKey: ['study-overview', studyId],
+    queryFn: () =>
+      apiClient.get(API.MONITORING_OVERVIEW, {
+        params: studyId ? { study_id: studyId } : {},
+      }).then(r => r.data),
+    refetchInterval: 120000,
+  })
+}
+
+// ── SAE Expedited Reporting ──
+export function useSaeTimeline(params = {}) {
+  return useQuery({
+    queryKey: ['sae-timeline', params],
+    queryFn: () =>
+      apiClient.get(API.SAE_TIMELINE, { params }).then(r => r.data),
+    refetchInterval: 60000, // Refresh every minute for countdown accuracy
+  })
+}
+
+export function useMarkSaeReported() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id) =>
+      apiClient.post(`${API.SAE_MARK_REPORTED}${id}/mark-reported/`).then(r => r.data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['sae-timeline'] })
+      qc.invalidateQueries({ queryKey: ['adverse-events'] })
+      qc.invalidateQueries({ queryKey: ['study-overview'] })
+    },
+  })
+}

@@ -117,3 +117,96 @@ class SafetyReviewViewSet(AuditCreateMixin, viewsets.ModelViewSet):
     permission_classes = [IsSafetyOfficer]
     filterset_fields = ["study", "review_type"]
 
+
+# ── SAE Expedited Reporting Timeline ──
+
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
+from django.utils import timezone as tz
+
+
+class SaeTimelineView(APIView):
+    """GET /api/v1/safety/sae-timeline/
+
+    Returns all SAEs that have reporting deadlines, with countdown data.
+    Filterable by ?status=pending|overdue|on_time
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        qs = AdverseEvent.objects.filter(
+            serious=True,
+            reporting_deadline__isnull=False,
+        ).select_related("subject", "subject__site", "study")
+
+        # Optional filter
+        status_filter = request.query_params.get("status")
+        if status_filter:
+            qs = qs.filter(reporting_status=status_filter)
+
+        data = []
+        for sae in qs.order_by("reporting_deadline"):
+            data.append({
+                "id": sae.pk,
+                "ae_term": sae.ae_term,
+                "subject_identifier": sae.subject.subject_identifier if sae.subject else None,
+                "site_code": sae.subject.site.site_code if sae.subject and sae.subject.site else None,
+                "study_protocol": sae.study.protocol_number if sae.study else None,
+                "severity": sae.severity,
+                "serious_criteria": sae.serious_criteria,
+                "reported_at": sae.reported_at,
+                "reporting_deadline": sae.reporting_deadline,
+                "reporting_status": sae.reporting_status,
+                "reporting_status_display": sae.get_reporting_status_display(),
+                "reported_to_authority_at": sae.reported_to_authority_at,
+                "deadline_days_remaining": sae.deadline_days_remaining,
+                "deadline_percent_elapsed": sae.deadline_percent_elapsed,
+            })
+
+        # Summary stats
+        all_sae_qs = AdverseEvent.objects.filter(
+            serious=True, reporting_deadline__isnull=False
+        )
+        summary = {
+            "total": all_sae_qs.count(),
+            "pending": all_sae_qs.filter(reporting_status="pending").count(),
+            "overdue": all_sae_qs.filter(reporting_status="overdue").count(),
+            "on_time": all_sae_qs.filter(reporting_status="on_time").count(),
+        }
+
+        return Response({"summary": summary, "results": data})
+
+
+class MarkSaeReportedView(APIView):
+    """POST /api/v1/safety/sae/<id>/mark-reported/
+
+    Marks an SAE as reported to the regulatory authority.
+    """
+
+    permission_classes = [IsSafetyOfficer]
+
+    def post(self, request, pk):
+        try:
+            sae = AdverseEvent.objects.get(pk=pk, serious=True)
+        except AdverseEvent.DoesNotExist:
+            return Response(
+                {"detail": "SAE not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        now = tz.now()
+        sae.reported_to_authority_at = now
+
+        if sae.reporting_deadline and now <= sae.reporting_deadline:
+            sae.reporting_status = "on_time"
+        else:
+            sae.reporting_status = "overdue"
+
+        sae.save(update_fields=["reported_to_authority_at", "reporting_status"])
+
+        return Response({
+            "detail": f"SAE AE-{sae.pk} marked as reported.",
+            "reporting_status": sae.reporting_status,
+            "reported_to_authority_at": sae.reported_to_authority_at,
+        })

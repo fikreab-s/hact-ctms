@@ -66,6 +66,11 @@ export const ROUTE_ACCESS = {
     // Lab — IsLabManager → only lab_manager, study_admin, admin
     ROLES.ADMIN, ROLES.STUDY_ADMIN, ROLES.LAB_MANAGER,
   ],
+  '/monitoring': [
+    // Monitoring — RBM dashboard + SAE timelines
+    ROLES.ADMIN, ROLES.STUDY_ADMIN, ROLES.MONITOR,
+    ROLES.SAFETY_OFFICER, ROLES.DATA_MANAGER,
+  ],
   '/audit': [
     // Audit — IsAuditor → only auditor, study_admin, admin
     ROLES.ADMIN, ROLES.STUDY_ADMIN, ROLES.AUDITOR,
@@ -74,17 +79,23 @@ export const ROUTE_ACCESS = {
     // Integration status — admin only
     ROLES.ADMIN, ROLES.STUDY_ADMIN,
   ],
+  // ── Mobile EDC — accessible to all authenticated users ──
+  '/edc': [
+    ROLES.ADMIN, ROLES.STUDY_ADMIN, ROLES.DATA_MANAGER,
+    ROLES.SITE_COORDINATOR, ROLES.MONITOR, ROLES.SAFETY_OFFICER,
+    ROLES.LAB_MANAGER, ROLES.OPS_MANAGER, ROLES.AUDITOR,
+  ],
 }
 
 // ── Sidebar navigation per role ──
 // Which nav items appear for each role
 export const SIDEBAR_ACCESS = {
-  [ROLES.ADMIN]: ['/', '/studies', '/subjects', '/queries', '/safety', '/lab', '/audit', '/integrations'],
-  [ROLES.STUDY_ADMIN]: ['/', '/studies', '/subjects', '/queries', '/safety', '/lab', '/audit', '/integrations'],
-  [ROLES.DATA_MANAGER]: ['/', '/studies', '/subjects', '/queries'],
+  [ROLES.ADMIN]: ['/', '/studies', '/subjects', '/queries', '/safety', '/lab', '/monitoring', '/audit', '/integrations'],
+  [ROLES.STUDY_ADMIN]: ['/', '/studies', '/subjects', '/queries', '/safety', '/lab', '/monitoring', '/audit', '/integrations'],
+  [ROLES.DATA_MANAGER]: ['/', '/studies', '/subjects', '/queries', '/monitoring'],
   [ROLES.SITE_COORDINATOR]: ['/', '/studies', '/subjects', '/queries'],
-  [ROLES.MONITOR]: ['/', '/studies', '/subjects', '/queries'],
-  [ROLES.SAFETY_OFFICER]: ['/', '/studies', '/safety'],
+  [ROLES.MONITOR]: ['/', '/studies', '/subjects', '/queries', '/monitoring'],
+  [ROLES.SAFETY_OFFICER]: ['/', '/studies', '/safety', '/monitoring'],
   [ROLES.LAB_MANAGER]: ['/', '/studies', '/lab'],
   [ROLES.OPS_MANAGER]: ['/'],
   [ROLES.AUDITOR]: ['/', '/studies', '/audit'],
@@ -129,6 +140,10 @@ export const ACTION_PERMISSIONS = {
 
   // Audit actions
   EXPORT_AUDIT: [ROLES.ADMIN, ROLES.STUDY_ADMIN, ROLES.AUDITOR],
+
+  // EDC actions
+  EDC_ENROLL: [ROLES.ADMIN, ROLES.STUDY_ADMIN, ROLES.DATA_MANAGER, ROLES.SITE_COORDINATOR],
+  EDC_SUBMIT_CRF: [ROLES.ADMIN, ROLES.STUDY_ADMIN, ROLES.DATA_MANAGER, ROLES.SITE_COORDINATOR],
 }
 
 // ── Helper functions ──
@@ -189,4 +204,5 @@ export const ROUTE_LABELS = {
   '/lab': 'Laboratory',
   '/audit': 'Audit Trail',
   '/integrations': 'Integrations',
+  '/edc': 'Mobile EDC',
 }
