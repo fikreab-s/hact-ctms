@@ -27,6 +27,11 @@ class AdverseEventListSerializer(serializers.ModelSerializer):
         source="get_outcome_display", read_only=True
     )
     days_open = serializers.SerializerMethodField()
+    reporting_status_display = serializers.CharField(
+        source="get_reporting_status_display", read_only=True
+    )
+    deadline_days_remaining = serializers.FloatField(read_only=True)
+    deadline_percent_elapsed = serializers.FloatField(read_only=True)
 
     class Meta:
         model = AdverseEvent
@@ -41,9 +46,14 @@ class AdverseEventListSerializer(serializers.ModelSerializer):
             "action_taken",
             "days_open",
             "reported_at", "reported_by",
+            # SAE expedited reporting
+            "reporting_deadline", "reporting_status", "reporting_status_display",
+            "reported_to_authority_at",
+            "deadline_days_remaining", "deadline_percent_elapsed",
             "created_at", "updated_at",
         ]
-        read_only_fields = ("id", "created_at", "updated_at", "reported_at")
+        read_only_fields = ("id", "created_at", "updated_at", "reported_at",
+                           "reporting_deadline", "reporting_status")
 
     def get_days_open(self, obj):
         """Calculate days the AE has been open."""
@@ -76,6 +86,16 @@ class AdverseEventListSerializer(serializers.ModelSerializer):
             })
 
         return data
+
+    def create(self, validated_data):
+        """Auto-compute SAE reporting deadline on creation."""
+        instance = super().create(validated_data)
+        if instance.serious:
+            instance.compute_deadline()
+            instance.save(update_fields=[
+                "reporting_deadline", "reporting_status",
+            ])
+        return instance
 
 
 class AdverseEventDetailSerializer(AdverseEventListSerializer):

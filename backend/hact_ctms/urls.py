@@ -75,6 +75,10 @@ urlpatterns = [
     path("api/v1/outputs/", include("outputs.urls")),
     path("api/v1/audit/", include("audit.urls")),
     path("api/v1/integrations/", include("integrations.urls")),
+    # ── Mobile EDC (standalone CRF data entry) ──
+    path("api/v1/edc/", include("clinical.edc_urls")),
+    # ── Risk-Based Monitoring (ICH E6(R3)) ──
+    path("api/v1/monitoring/", include("monitoring.urls")),
 ]
 
 # Customize Django Admin

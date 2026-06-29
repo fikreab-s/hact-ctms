@@ -2,7 +2,7 @@ import { NavLink, useLocation } from 'react-router-dom'
 import {
   FiHome, FiFolder, FiUsers, FiMessageSquare,
   FiAlertTriangle, FiActivity, FiFileText,
-  FiShield, FiServer, FiX, FiChevronDown,
+  FiShield, FiServer, FiX, FiChevronDown, FiEye,
 } from 'react-icons/fi'
 import useAuthStore from '../store/authStore'
 import { getSidebarRoutes } from '../auth/roleConfig'
@@ -15,6 +15,7 @@ const ALL_NAV_ITEMS = [
   { to: '/queries', icon: FiMessageSquare, label: 'Queries', section: 'Clinical' },
   { to: '/safety', icon: FiAlertTriangle, label: 'Safety', section: 'Safety & Lab' },
   { to: '/lab', icon: FiActivity, label: 'Laboratory', section: 'Safety & Lab' },
+  { to: '/monitoring', icon: FiEye, label: 'Monitoring', section: 'Oversight' },
   { to: '/audit', icon: FiFileText, label: 'Audit Trail', section: 'Admin' },
   { to: '/integrations', icon: FiServer, label: 'Integrations', section: 'Admin',
     children: [

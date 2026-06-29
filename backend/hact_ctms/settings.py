@@ -81,6 +81,7 @@ HACT_APPS = [
     "lab.apps.LabConfig",
     "outputs.apps.OutputsConfig",
     "audit.apps.AuditConfig",
+    "monitoring.apps.MonitoringConfig",
 ]
 
 # External system integrations (additive — no existing code modified)
@@ -326,6 +327,11 @@ CELERY_BEAT_SCHEDULE = {
         "task": "integrations.check_erpnext_health",
         "schedule": 600,
     },
+    # SAE expedited reporting deadline check every 6 hours
+    "check-sae-deadlines-every-6-hours": {
+        "task": "safety.check_sae_reporting_deadlines",
+        "schedule": 21600,  # 6 hours in seconds
+    },
 }
 
 # =============================================================================
@@ -405,5 +411,23 @@ LOGGING = {
             "level": "INFO",
             "propagate": False,
         },
+        "monitoring": {
+            "handlers": ["console"],
+            "level": "DEBUG" if DEBUG else "INFO",
+            "propagate": False,
+        },
+        "safety": {
+            "handlers": ["console"],
+            "level": "DEBUG" if DEBUG else "INFO",
+            "propagate": False,
+        },
     },
 }
+
+# =============================================================================
+# Email — Console backend for development (configure SMTP for production)
+# =============================================================================
+EMAIL_BACKEND = env(
+    "EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend"
+)
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="noreply@hact-ctms.local")

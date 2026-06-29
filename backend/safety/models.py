@@ -91,6 +91,34 @@ class AdverseEvent(TimeStampedModel):
         related_name="reported_adverse_events",
     )
 
+    # ── SAE Expedited Reporting (ICH-GCP E6) ──
+    REPORTING_STATUS_CHOICES = [
+        ("not_applicable", "Not Applicable"),
+        ("pending", "Pending"),
+        ("on_time", "Reported On Time"),
+        ("overdue", "Overdue"),
+    ]
+
+    reporting_deadline = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Auto-computed deadline: 7 days (fatal/life-threatening) or 15 days (other SAE).",
+    )
+    reported_to_authority_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="When the SAE was actually reported to the regulatory authority.",
+    )
+    reporting_status = models.CharField(
+        max_length=20,
+        choices=REPORTING_STATUS_CHOICES,
+        default="not_applicable",
+        db_index=True,
+    )
+    # Track which notification thresholds have been sent
+    notified_at_50_pct = models.BooleanField(default=False)
+    notified_at_90_pct = models.BooleanField(default=False)
+
     class Meta:
         db_table = "safety_adverse_events"
         verbose_name = "Adverse Event"
@@ -100,6 +128,52 @@ class AdverseEvent(TimeStampedModel):
     def __str__(self):
         sae_flag = " [SAE]" if self.serious else ""
         return f"AE-{self.pk}: {self.ae_term[:50]}{sae_flag}"
+
+    def compute_deadline(self):
+        """Compute the SAE reporting deadline based on seriousness criteria.
+
+        ICH-GCP E6(R2) / FDA 21 CFR 312.32:
+        - Fatal or life-threatening SAE → 7 calendar days
+        - All other SAEs → 15 calendar days
+        """
+        from datetime import timedelta
+
+        if not self.serious:
+            self.reporting_status = "not_applicable"
+            self.reporting_deadline = None
+            return
+
+        criteria_lower = (self.serious_criteria or "").lower()
+        if "death" in criteria_lower or "life_threatening" in criteria_lower:
+            days = 7
+        else:
+            days = 15
+
+        self.reporting_deadline = self.reported_at + timedelta(days=days)
+        self.reporting_status = "pending"
+
+    @property
+    def deadline_days_remaining(self):
+        """Days remaining until the reporting deadline (negative = overdue)."""
+        if not self.reporting_deadline:
+            return None
+        from django.utils import timezone
+
+        delta = self.reporting_deadline - timezone.now()
+        return round(delta.total_seconds() / 86400, 1)
+
+    @property
+    def deadline_percent_elapsed(self):
+        """Percentage of the reporting window that has elapsed (0-100+)."""
+        if not self.reporting_deadline or not self.reported_at:
+            return None
+        from django.utils import timezone
+
+        total = (self.reporting_deadline - self.reported_at).total_seconds()
+        elapsed = (timezone.now() - self.reported_at).total_seconds()
+        if total <= 0:
+            return 100
+        return round((elapsed / total) * 100, 1)
 
 
 # =============================================================================

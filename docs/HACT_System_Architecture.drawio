@@ -1,0 +1,445 @@
+<mxfile host="app.diagrams.net" modified="2026-06-26T15:30:00.000Z" agent="HACT-CTMS" version="24.0.0" type="device">
+  <diagram id="hact-e2e-architecture" name="System Architecture">
+    <mxGraphModel dx="1800" dy="1200" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- ============================================================= -->
+        <!-- TITLE -->
+        <!-- ============================================================= -->
+        <mxCell id="title" value="HACT CTMS — End-to-End System Architecture &amp; Persona Workflow" style="text;html=1;fontSize=22;fontStyle=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontColor=#1e293b;fontFamily=Inter;" vertex="1" parent="1">
+          <mxGeometry x="300" y="10" width="1000" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="subtitle" value="ICH E6(R3) Compliant · Offline-First Mobile EDC · Risk-Based Monitoring · 9 RBAC Roles" style="text;html=1;fontSize=11;align=center;verticalAlign=middle;whiteSpace=wrap;fontColor=#64748b;fontFamily=Inter;" vertex="1" parent="1">
+          <mxGeometry x="400" y="45" width="800" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================= -->
+        <!-- KEYCLOAK SSO (Top Center) -->
+        <!-- ============================================================= -->
+        <mxCell id="keycloak_group" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#3b82f6;strokeWidth=2;arcSize=12;" vertex="1" parent="1">
+          <mxGeometry x="620" y="80" width="360" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="keycloak_icon" value="🔐" style="text;html=1;fontSize=28;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="630" y="85" width="40" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="keycloak_title" value="KEYCLOAK SSO" style="text;html=1;fontSize=14;fontStyle=1;align=left;verticalAlign=middle;fontColor=#1e40af;fontFamily=Inter;" vertex="1" parent="1">
+          <mxGeometry x="670" y="85" width="200" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="keycloak_desc" value="Identity &amp; Access Management&lt;br&gt;OIDC PKCE · 2FA · 9 RBAC Roles&lt;br&gt;CRC · Data Manager · PI · Safety Officer · Monitor · Lab · Ops · Auditor · Admin" style="text;html=1;fontSize=9;align=left;verticalAlign=top;fontColor=#475569;fontFamily=Inter;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="635" y="112" width="335" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================= -->
+        <!-- PERSONAS (Left Side) -->
+        <!-- ============================================================= -->
+        <mxCell id="personas_header" value="👥 PERSONAS" style="text;html=1;fontSize=12;fontStyle=1;align=center;verticalAlign=middle;fontColor=#7c3aed;fontFamily=Inter;" vertex="1" parent="1">
+          <mxGeometry x="20" y="80" width="160" height="25" as="geometry" />
+        </mxCell>
+
+        <mxCell id="persona_crc" value="👩‍⚕️ CRC&lt;br&gt;&lt;font style=&quot;font-size:8px;color:#64748b&quot;&gt;Bedside data entry&lt;br&gt;Subject enrollment&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f3ff;strokeColor=#8b5cf6;strokeWidth=1.5;fontSize=10;fontStyle=1;fontColor=#5b21b6;arcSize=15;" vertex="1" parent="1">
+          <mxGeometry x="20" y="110" width="130" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="persona_dm" value="📊 Data Manager&lt;br&gt;&lt;font style=&quot;font-size:8px;color:#64748b&quot;&gt;Queries · Exports&lt;br&gt;CRF design (OC)&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f3ff;strokeColor=#8b5cf6;strokeWidth=1.5;fontSize=10;fontStyle=1;fontColor=#5b21b6;arcSize=15;" vertex="1" parent="1">
+          <mxGeometry x="20" y="175" width="130" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="persona_pi" value="🩺 PI / Study Admin&lt;br&gt;&lt;font style=&quot;font-size:8px;color:#64748b&quot;&gt;Study oversight&lt;br&gt;SAE review&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f3ff;strokeColor=#8b5cf6;strokeWidth=1.5;fontSize=10;fontStyle=1;fontColor=#5b21b6;arcSize=15;" vertex="1" parent="1">
+          <mxGeometry x="20" y="240" width="130" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="persona_safety" value="⚠️ Safety Officer&lt;br&gt;&lt;font style=&quot;font-size:8px;color:#64748b&quot;&gt;AE/SAE reporting&lt;br&gt;CIOMS · EFDA&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f3ff;strokeColor=#8b5cf6;strokeWidth=1.5;fontSize=10;fontStyle=1;fontColor=#5b21b6;arcSize=15;" vertex="1" parent="1">
+          <mxGeometry x="20" y="305" width="130" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="persona_monitor" value="🔍 Monitor (CRA)&lt;br&gt;&lt;font style=&quot;font-size:8px;color:#64748b&quot;&gt;Risk monitoring&lt;br&gt;Site oversight&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f3ff;strokeColor=#8b5cf6;strokeWidth=1.5;fontSize=10;fontStyle=1;fontColor=#5b21b6;arcSize=15;" vertex="1" parent="1">
+          <mxGeometry x="20" y="370" width="130" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="persona_lab" value="🔬 Lab Manager&lt;br&gt;&lt;font style=&quot;font-size:8px;color:#64748b&quot;&gt;Result review&lt;br&gt;Flagging H/L/N&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f3ff;strokeColor=#8b5cf6;strokeWidth=1.5;fontSize=10;fontStyle=1;fontColor=#5b21b6;arcSize=15;" vertex="1" parent="1">
+          <mxGeometry x="20" y="435" width="130" height="55" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================= -->
+        <!-- MOBILE EDC (Left-Center) -->
+        <!-- ============================================================= -->
+        <mxCell id="edc_group" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ecfdf5;strokeColor=#10b981;strokeWidth=2.5;arcSize=10;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="200" y="200" width="280" height="210" as="geometry" />
+        </mxCell>
+        <mxCell id="edc_icon" value="📱" style="text;html=1;fontSize=24;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="210" y="205" width="35" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="edc_title" value="MOBILE EDC (React PWA)" style="text;html=1;fontSize=13;fontStyle=1;align=left;verticalAlign=middle;fontColor=#047857;fontFamily=Inter;" vertex="1" parent="1">
+          <mxGeometry x="245" y="205" width="225" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="edc_subtitle" value="Offline-First · Touch-Optimized · E-Signature" style="text;html=1;fontSize=9;align=left;verticalAlign=middle;fontColor=#6b7280;fontFamily=Inter;" vertex="1" parent="1">
+          <mxGeometry x="215" y="230" width="255" height="15" as="geometry" />
+        </mxCell>
+
+        <mxCell id="edc_enroll" value="Enroll Subject" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d1fae5;strokeColor=#34d399;fontSize=9;fontColor=#065f46;arcSize=20;" vertex="1" parent="1">
+          <mxGeometry x="215" y="255" width="120" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="edc_crf" value="Fill CRF Forms" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d1fae5;strokeColor=#34d399;fontSize=9;fontColor=#065f46;arcSize=20;" vertex="1" parent="1">
+          <mxGeometry x="345" y="255" width="120" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="edc_visit" value="Visit Schedule" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d1fae5;strokeColor=#34d399;fontSize=9;fontColor=#065f46;arcSize=20;" vertex="1" parent="1">
+          <mxGeometry x="215" y="290" width="120" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="edc_esign" value="E-Signature (21 CFR 11)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d1fae5;strokeColor=#34d399;fontSize=9;fontColor=#065f46;arcSize=20;" vertex="1" parent="1">
+          <mxGeometry x="345" y="290" width="120" height="28" as="geometry" />
+        </mxCell>
+
+        <mxCell id="edc_offline" value="📴 OFFLINE MODE&lt;br&gt;&lt;font style=&quot;font-size:8px&quot;&gt;IndexedDB → Background Sync&lt;br&gt;Dedup by submission_uuid&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fef3c7;strokeColor=#f59e0b;fontSize=9;fontStyle=1;fontColor=#92400e;arcSize=15;" vertex="1" parent="1">
+          <mxGeometry x="215" y="330" width="250" height="45" as="geometry" />
+        </mxCell>
+
+        <!-- Arrow: CRC → Mobile EDC -->
+        <mxCell id="arrow_crc_edc" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#8b5cf6;strokeWidth=1.5;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;" edge="1" parent="1" source="persona_crc" target="edc_group">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow_crc_edc_label" value="CRF entry on tablet" style="edgeLabel;html=1;fontSize=8;fontColor=#7c3aed;" vertex="1" connectable="0" parent="arrow_crc_edc">
+          <mxGeometry x="-0.2" relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================= -->
+        <!-- HACT CTMS BACKEND (Center) -->
+        <!-- ============================================================= -->
+        <mxCell id="ctms_group" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eff6ff;strokeColor=#3b82f6;strokeWidth=2.5;arcSize=8;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="540" y="200" width="520" height="380" as="geometry" />
+        </mxCell>
+        <mxCell id="ctms_title" value="⚕️ HACT CTMS — Operations Hub" style="text;html=1;fontSize=14;fontStyle=1;align=center;verticalAlign=middle;fontColor=#1e40af;fontFamily=Inter;" vertex="1" parent="1">
+          <mxGeometry x="620" y="205" width="360" height="25" as="geometry" />
+        </mxCell>
+
+        <!-- React Frontend -->
+        <mxCell id="react_group" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e0f2fe;strokeColor=#0ea5e9;strokeWidth=1.5;arcSize=12;" vertex="1" parent="1">
+          <mxGeometry x="555" y="240" width="240" height="155" as="geometry" />
+        </mxCell>
+        <mxCell id="react_title" value="⚛️ React Frontend (SPA)" style="text;html=1;fontSize=11;fontStyle=1;align=center;verticalAlign=middle;fontColor=#0369a1;fontFamily=Inter;" vertex="1" parent="1">
+          <mxGeometry x="560" y="245" width="230" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="react_dashboard" value="📈 Dashboard" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#bae6fd;strokeColor=#38bdf8;fontSize=8;fontColor=#0c4a6e;arcSize=20;" vertex="1" parent="1">
+          <mxGeometry x="562" y="270" width="70" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="react_studies" value="📁 Studies" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#bae6fd;strokeColor=#38bdf8;fontSize=8;fontColor=#0c4a6e;arcSize=20;" vertex="1" parent="1">
+          <mxGeometry x="637" y="270" width="70" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="react_subjects" value="👥 Subjects" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#bae6fd;strokeColor=#38bdf8;fontSize=8;fontColor=#0c4a6e;arcSize=20;" vertex="1" parent="1">
+          <mxGeometry x="712" y="270" width="75" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="react_safety" value="⚠️ Safety/SAE" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#bae6fd;strokeColor=#38bdf8;fontSize=8;fontColor=#0c4a6e;arcSize=20;" vertex="1" parent="1">
+          <mxGeometry x="562" y="300" width="75" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="react_queries" value="💬 Queries" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#bae6fd;strokeColor=#38bdf8;fontSize=8;fontColor=#0c4a6e;arcSize=20;" vertex="1" parent="1">
+          <mxGeometry x="642" y="300" width="65" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="react_lab" value="🔬 Lab" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#bae6fd;strokeColor=#38bdf8;fontSize=8;fontColor=#0c4a6e;arcSize=20;" vertex="1" parent="1">
+          <mxGeometry x="712" y="300" width="75" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="react_monitoring" value="🛡️ RBM Dashboard" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fef3c7;strokeColor=#f59e0b;fontSize=8;fontStyle=1;fontColor=#92400e;arcSize=20;" vertex="1" parent="1">
+          <mxGeometry x="562" y="330" width="110" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="react_sae_timeline" value="⏱️ SAE Timeline" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fee2e2;strokeColor=#f87171;fontSize=8;fontStyle=1;fontColor=#991b1b;arcSize=20;" vertex="1" parent="1">
+          <mxGeometry x="677" y="330" width="110" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="react_audit" value="📋 Audit Trail" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#bae6fd;strokeColor=#38bdf8;fontSize=8;fontColor=#0c4a6e;arcSize=20;" vertex="1" parent="1">
+          <mxGeometry x="562" y="360" width="75" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="react_integ" value="🔗 Integrations" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#bae6fd;strokeColor=#38bdf8;fontSize=8;fontColor=#0c4a6e;arcSize=20;" vertex="1" parent="1">
+          <mxGeometry x="642" y="360" width="85" height="24" as="geometry" />
+        </mxCell>
+
+        <!-- Django Backend -->
+        <mxCell id="django_group" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#2563eb;strokeWidth=1.5;arcSize=12;" vertex="1" parent="1">
+          <mxGeometry x="810" y="240" width="235" height="155" as="geometry" />
+        </mxCell>
+        <mxCell id="django_title" value="🐍 Django REST API" style="text;html=1;fontSize=11;fontStyle=1;align=center;verticalAlign=middle;fontColor=#1d4ed8;fontFamily=Inter;" vertex="1" parent="1">
+          <mxGeometry x="815" y="245" width="225" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="django_clinical" value="clinical (Models, Views)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#93c5fd;strokeColor=#3b82f6;fontSize=8;fontColor=#1e3a5f;arcSize=20;" vertex="1" parent="1">
+          <mxGeometry x="818" y="270" width="110" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="django_safety" value="safety (AE/SAE)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#93c5fd;strokeColor=#3b82f6;fontSize=8;fontColor=#1e3a5f;arcSize=20;" vertex="1" parent="1">
+          <mxGeometry x="933" y="270" width="105" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="django_monitoring" value="monitoring (RBM)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#93c5fd;strokeColor=#3b82f6;fontSize=8;fontColor=#1e3a5f;arcSize=20;" vertex="1" parent="1">
+          <mxGeometry x="818" y="296" width="110" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="django_lab" value="lab (Results)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#93c5fd;strokeColor=#3b82f6;fontSize=8;fontColor=#1e3a5f;arcSize=20;" vertex="1" parent="1">
+          <mxGeometry x="933" y="296" width="105" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="django_audit" value="audit (Trail)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#93c5fd;strokeColor=#3b82f6;fontSize=8;fontColor=#1e3a5f;arcSize=20;" vertex="1" parent="1">
+          <mxGeometry x="818" y="322" width="75" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="django_outputs" value="outputs (CIOMS)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#93c5fd;strokeColor=#3b82f6;fontSize=8;fontColor=#1e3a5f;arcSize=20;" vertex="1" parent="1">
+          <mxGeometry x="898" y="322" width="85" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="django_accounts" value="accounts" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#93c5fd;strokeColor=#3b82f6;fontSize=8;fontColor=#1e3a5f;arcSize=20;" vertex="1" parent="1">
+          <mxGeometry x="818" y="348" width="60" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="django_integrations" value="integrations" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#93c5fd;strokeColor=#3b82f6;fontSize=8;fontColor=#1e3a5f;arcSize=20;" vertex="1" parent="1">
+          <mxGeometry x="883" y="348" width="75" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="django_ops" value="ops" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#93c5fd;strokeColor=#3b82f6;fontSize=8;fontColor=#1e3a5f;arcSize=20;" vertex="1" parent="1">
+          <mxGeometry x="963" y="348" width="75" height="22" as="geometry" />
+        </mxCell>
+
+        <!-- Database + Celery Row -->
+        <mxCell id="postgres" value="🗄️ PostgreSQL&lt;br&gt;&lt;font style=&quot;font-size:8px;color:#475569&quot;&gt;Studies · Sites · Subjects&lt;br&gt;Forms · AEs · Lab Results&lt;br&gt;Audit Logs · Queries&lt;/font&gt;" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=8;fillColor=#dbeafe;strokeColor=#3b82f6;strokeWidth=1.5;fontSize=10;fontStyle=1;fontColor=#1e40af;arcSize=12;" vertex="1" parent="1">
+          <mxGeometry x="555" y="420" width="160" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="redis" value="⚡ Redis&lt;br&gt;&lt;font style=&quot;font-size:8px;color:#475569&quot;&gt;Task Queue&lt;br&gt;Caching&lt;/font&gt;" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=8;fillColor=#fce7f3;strokeColor=#ec4899;strokeWidth=1.5;fontSize=10;fontStyle=1;fontColor=#9d174d;" vertex="1" parent="1">
+          <mxGeometry x="730" y="420" width="100" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="celery_group" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fef3c7;strokeColor=#f59e0b;strokeWidth=1.5;arcSize=12;" vertex="1" parent="1">
+          <mxGeometry x="845" y="415" width="200" height="145" as="geometry" />
+        </mxCell>
+        <mxCell id="celery_title" value="🔄 Celery Workers + Beat" style="text;html=1;fontSize=10;fontStyle=1;align=center;verticalAlign=middle;fontColor=#92400e;fontFamily=Inter;" vertex="1" parent="1">
+          <mxGeometry x="850" y="418" width="190" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="celery_sync_oc" value="sync_subject_to_openclinica()" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fde68a;strokeColor=#f59e0b;fontSize=8;fontColor=#78350f;arcSize=20;" vertex="1" parent="1">
+          <mxGeometry x="853" y="442" width="185" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="celery_etmf" value="create_etmf_folders()" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fde68a;strokeColor=#f59e0b;fontSize=8;fontColor=#78350f;arcSize=20;" vertex="1" parent="1">
+          <mxGeometry x="853" y="466" width="185" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="celery_erpnext" value="sync_site_to_erpnext()" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fde68a;strokeColor=#f59e0b;fontSize=8;fontColor=#78350f;arcSize=20;" vertex="1" parent="1">
+          <mxGeometry x="853" y="490" width="185" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="celery_sae" value="⏱️ check_sae_deadlines() — every 6h" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fee2e2;strokeColor=#f87171;fontSize=8;fontStyle=1;fontColor=#991b1b;arcSize=20;" vertex="1" parent="1">
+          <mxGeometry x="853" y="514" width="185" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="celery_health" value="check_erpnext_health() — every 10m" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fde68a;strokeColor=#f59e0b;fontSize=8;fontColor=#78350f;arcSize=20;" vertex="1" parent="1">
+          <mxGeometry x="853" y="538" width="185" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================= -->
+        <!-- EXTERNAL SYSTEMS (Bottom Row) -->
+        <!-- ============================================================= -->
+
+        <!-- OpenClinica -->
+        <mxCell id="openclinica" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#faf5ff;strokeColor=#a855f7;strokeWidth=2;arcSize=12;" vertex="1" parent="1">
+          <mxGeometry x="200" y="500" width="180" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="oc_title" value="📋 OpenClinica CE" style="text;html=1;fontSize=11;fontStyle=1;align=center;verticalAlign=middle;fontColor=#7e22ce;fontFamily=Inter;" vertex="1" parent="1">
+          <mxGeometry x="215" y="505" width="150" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="oc_desc" value="CRF Schema Definition (Setup Only)&lt;br&gt;Study OID: S_PSBI2026&lt;br&gt;Events · Forms · Edit Checks&lt;br&gt;&lt;b&gt;⚠️ Not used daily after v2.0&lt;/b&gt;" style="text;html=1;fontSize=8;align=center;verticalAlign=top;fontColor=#6b21a8;fontFamily=Inter;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="205" y="528" width="170" height="65" as="geometry" />
+        </mxCell>
+
+        <!-- SENAITE -->
+        <mxCell id="senaite" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f0fdf4;strokeColor=#22c55e;strokeWidth=2;arcSize=12;" vertex="1" parent="1">
+          <mxGeometry x="200" y="620" width="180" height="85" as="geometry" />
+        </mxCell>
+        <mxCell id="senaite_title" value="🔬 SENAITE LIMS" style="text;html=1;fontSize=11;fontStyle=1;align=center;verticalAlign=middle;fontColor=#15803d;fontFamily=Inter;" vertex="1" parent="1">
+          <mxGeometry x="215" y="625" width="150" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="senaite_desc" value="Lab Sample Tracking&lt;br&gt;Test Results · QC Workflow&lt;br&gt;Webhook → HACT CTMS" style="text;html=1;fontSize=8;align=center;verticalAlign=top;fontColor=#166534;fontFamily=Inter;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="210" y="648" width="160" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- Nextcloud -->
+        <mxCell id="nextcloud" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eff6ff;strokeColor=#3b82f6;strokeWidth=2;arcSize=12;" vertex="1" parent="1">
+          <mxGeometry x="430" y="620" width="180" height="85" as="geometry" />
+        </mxCell>
+        <mxCell id="nc_title" value="📁 Nextcloud (eTMF)" style="text;html=1;fontSize=11;fontStyle=1;align=center;verticalAlign=middle;fontColor=#1d4ed8;fontFamily=Inter;" vertex="1" parent="1">
+          <mxGeometry x="445" y="625" width="150" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="nc_desc" value="Protocol Docs · IRB Letters&lt;br&gt;Site Documents · CRA Reports&lt;br&gt;WebDAV auto-folder creation" style="text;html=1;fontSize=8;align=center;verticalAlign=top;fontColor=#1e40af;fontFamily=Inter;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="440" y="648" width="160" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- ERPNext -->
+        <mxCell id="erpnext" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff7ed;strokeColor=#f97316;strokeWidth=2;arcSize=12;" vertex="1" parent="1">
+          <mxGeometry x="660" y="620" width="180" height="85" as="geometry" />
+        </mxCell>
+        <mxCell id="erp_title" value="📊 ERPNext (Finance)" style="text;html=1;fontSize=11;fontStyle=1;align=center;verticalAlign=middle;fontColor=#c2410c;fontFamily=Inter;" vertex="1" parent="1">
+          <mxGeometry x="675" y="625" width="150" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="erp_desc" value="Site Contracts · Study Budgets&lt;br&gt;Invoices · Payments&lt;br&gt;REST API auto-sync" style="text;html=1;fontSize=8;align=center;verticalAlign=top;fontColor=#9a3412;fontFamily=Inter;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="670" y="648" width="160" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- NGINX -->
+        <mxCell id="nginx" value="🌐 NGINX&lt;br&gt;&lt;font style=&quot;font-size:8px&quot;&gt;Reverse Proxy · TLS&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f1f5f9;strokeColor=#94a3b8;strokeWidth=1.5;fontSize=10;fontStyle=1;fontColor=#334155;arcSize=15;" vertex="1" parent="1">
+          <mxGeometry x="555" y="185" width="110" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================= -->
+        <!-- ARROWS — Data Flow -->
+        <!-- ============================================================= -->
+
+        <!-- Keycloak → CTMS -->
+        <mxCell id="arrow_kc_ctms" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#3b82f6;strokeWidth=2;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="keycloak_group" target="ctms_group">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow_kc_label" value="JWT Tokens" style="edgeLabel;html=1;fontSize=8;fontColor=#3b82f6;fontStyle=1;" vertex="1" connectable="0" parent="arrow_kc_ctms">
+          <mxGeometry x="-0.3" relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Keycloak → Mobile EDC -->
+        <mxCell id="arrow_kc_edc" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#3b82f6;strokeWidth=1.5;dashed=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="keycloak_group" target="edc_group">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="340" y="125" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="arrow_kc_edc_label" value="SSO" style="edgeLabel;html=1;fontSize=8;fontColor=#3b82f6;" vertex="1" connectable="0" parent="arrow_kc_edc">
+          <mxGeometry x="-0.2" relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Mobile EDC → Django API -->
+        <mxCell id="arrow_edc_django" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#10b981;strokeWidth=2;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="edc_group" target="django_group">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow_edc_django_label" value="POST /api/v1/edc/*&lt;br&gt;(enroll · submit · sync)" style="edgeLabel;html=1;fontSize=8;fontColor=#059669;fontStyle=1;" vertex="1" connectable="0" parent="arrow_edc_django">
+          <mxGeometry x="-0.1" y="15" relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Persona arrows to CTMS -->
+        <mxCell id="arrow_dm_ctms" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#8b5cf6;strokeWidth=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.25;entryDx=0;entryDy=0;" edge="1" parent="1" source="persona_dm" target="ctms_group">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="190" y="203" />
+              <mxPoint x="190" y="295" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="arrow_pi_ctms" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#8b5cf6;strokeWidth=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.4;entryDx=0;entryDy=0;" edge="1" parent="1" source="persona_pi" target="ctms_group">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="185" y="268" />
+              <mxPoint x="185" y="352" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="arrow_safety_ctms" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#8b5cf6;strokeWidth=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.55;entryDx=0;entryDy=0;" edge="1" parent="1" source="persona_safety" target="ctms_group">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="180" y="333" />
+              <mxPoint x="180" y="409" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="arrow_monitor_ctms" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#8b5cf6;strokeWidth=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.7;entryDx=0;entryDy=0;" edge="1" parent="1" source="persona_monitor" target="ctms_group">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="175" y="398" />
+              <mxPoint x="175" y="466" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="arrow_lab_ctms" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#8b5cf6;strokeWidth=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.85;entryDx=0;entryDy=0;" edge="1" parent="1" source="persona_lab" target="ctms_group">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="170" y="463" />
+              <mxPoint x="170" y="523" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Celery → External Systems -->
+        <mxCell id="arrow_celery_oc" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#a855f7;strokeWidth=1.5;dashed=1;dashPattern=5 3;exitX=0;exitY=0.8;exitDx=0;exitDy=0;entryX=1;entryY=0.3;entryDx=0;entryDy=0;" edge="1" parent="1" source="celery_group" target="openclinica">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="530" y="531" />
+              <mxPoint x="530" y="530" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="arrow_celery_oc_label" value="SOAP API&lt;br&gt;(sync subjects)" style="edgeLabel;html=1;fontSize=7;fontColor=#a855f7;" vertex="1" connectable="0" parent="arrow_celery_oc">
+          <mxGeometry x="0.2" y="-10" relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- SENAITE → CTMS webhook -->
+        <mxCell id="arrow_senaite_ctms" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#22c55e;strokeWidth=2;exitX=1;exitY=0.3;exitDx=0;exitDy=0;entryX=0.1;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="senaite" target="ctms_group">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="520" y="646" />
+              <mxPoint x="520" y="590" />
+              <mxPoint x="592" y="590" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="arrow_senaite_label" value="Webhook POST&lt;br&gt;(lab results)" style="edgeLabel;html=1;fontSize=7;fontColor=#22c55e;fontStyle=1;" vertex="1" connectable="0" parent="arrow_senaite_ctms">
+          <mxGeometry x="0.3" relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Celery → Nextcloud -->
+        <mxCell id="arrow_celery_nc" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#3b82f6;strokeWidth=1.5;dashed=1;dashPattern=5 3;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" target="nextcloud">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="845" y="480" as="sourcePoint" />
+            <Array as="points">
+              <mxPoint x="520" y="480" />
+              <mxPoint x="520" y="620" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="arrow_nc_label" value="WebDAV" style="edgeLabel;html=1;fontSize=7;fontColor=#3b82f6;" vertex="1" connectable="0" parent="arrow_celery_nc">
+          <mxGeometry x="0.6" y="10" relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Celery → ERPNext -->
+        <mxCell id="arrow_celery_erp" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#f97316;strokeWidth=1.5;dashed=1;dashPattern=5 3;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" target="erpnext">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="945" y="560" as="sourcePoint" />
+            <Array as="points">
+              <mxPoint x="945" y="600" />
+              <mxPoint x="750" y="600" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="arrow_erp_label" value="REST API" style="edgeLabel;html=1;fontSize=7;fontColor=#f97316;" vertex="1" connectable="0" parent="arrow_celery_erp">
+          <mxGeometry x="0.3" y="-10" relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- SAE Email arrow -->
+        <mxCell id="email_box" value="📧 Email Alerts&lt;br&gt;&lt;font style=&quot;font-size:8px&quot;&gt;SAE Deadline Notifications&lt;br&gt;50% · 90% · Overdue&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fee2e2;strokeColor=#f87171;strokeWidth=1.5;fontSize=9;fontStyle=1;fontColor=#991b1b;arcSize=15;" vertex="1" parent="1">
+          <mxGeometry x="900" y="620" width="155" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow_celery_email" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#ef4444;strokeWidth=1.5;dashed=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="celery_group" target="email_box">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow_email_label" value="SMTP" style="edgeLabel;html=1;fontSize=7;fontColor=#ef4444;" vertex="1" connectable="0" parent="arrow_celery_email">
+          <mxGeometry x="-0.2" relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================= -->
+        <!-- LEGEND -->
+        <!-- ============================================================= -->
+        <mxCell id="legend_group" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#cbd5e1;strokeWidth=1;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="1100" y="80" width="230" height="170" as="geometry" />
+        </mxCell>
+        <mxCell id="legend_title" value="LEGEND" style="text;html=1;fontSize=10;fontStyle=1;align=center;verticalAlign=middle;fontColor=#334155;fontFamily=Inter;" vertex="1" parent="1">
+          <mxGeometry x="1170" y="85" width="80" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="legend_auto" value="── Automatic (Celery/Webhook)" style="text;html=1;fontSize=9;align=left;verticalAlign=middle;fontColor=#22c55e;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1110" y="110" width="200" height="16" as="geometry" />
+        </mxCell>
+        <mxCell id="legend_dashed" value="- - Async Task (Celery)" style="text;html=1;fontSize=9;align=left;verticalAlign=middle;fontColor=#f59e0b;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1110" y="128" width="200" height="16" as="geometry" />
+        </mxCell>
+        <mxCell id="legend_user" value="── User Interaction" style="text;html=1;fontSize=9;align=left;verticalAlign=middle;fontColor=#8b5cf6;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1110" y="146" width="200" height="16" as="geometry" />
+        </mxCell>
+        <mxCell id="legend_new" value="🟡 NEW: RBM Dashboard" style="text;html=1;fontSize=9;align=left;verticalAlign=middle;fontColor=#92400e;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1110" y="164" width="200" height="16" as="geometry" />
+        </mxCell>
+        <mxCell id="legend_sae" value="🔴 NEW: SAE Expedited Reporting" style="text;html=1;fontSize=9;align=left;verticalAlign=middle;fontColor=#991b1b;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1110" y="182" width="200" height="16" as="geometry" />
+        </mxCell>
+        <mxCell id="legend_edc" value="🟢 NEW: Mobile EDC (Offline)" style="text;html=1;fontSize=9;align=left;verticalAlign=middle;fontColor=#059669;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1110" y="200" width="200" height="16" as="geometry" />
+        </mxCell>
+        <mxCell id="legend_auth" value="🔵 Authentication (Keycloak)" style="text;html=1;fontSize=9;align=left;verticalAlign=middle;fontColor=#2563eb;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1110" y="218" width="200" height="16" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

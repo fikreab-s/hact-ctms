@@ -37,6 +37,8 @@ docker-compose.override.yml
 
 # Logs
 *.log
+*_log.txt
+**/debug_*.py
 
 # Database
 *.sqlite3

@@ -1,0 +1,325 @@
+<mxfile host="app.diagrams.net" agent="HACT-CTMS">
+  <diagram id="hact-persona-workflow" name="Persona Workflow">
+    <mxGraphModel dx="1664" dy="914" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1200" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=1;fontSize=22;fontStyle=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontColor=#1e293b;fontFamily=Inter;" value="HACT CTMS — Persona-Based End-to-End Workflow" vertex="1">
+          <mxGeometry height="35" width="1000" x="300" y="10" as="geometry" />
+        </mxCell>
+        <mxCell id="subtitle" parent="1" style="text;html=1;fontSize=11;align=center;verticalAlign=middle;whiteSpace=wrap;fontColor=#64748b;fontFamily=Inter;" value="Daily Clinical Operations — From Subject Enrollment to Data Lock" vertex="1">
+          <mxGeometry height="20" width="700" x="450" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="lane_crc" parent="1" style="text;html=1;fontSize=12;fontStyle=1;align=center;verticalAlign=middle;fontColor=#ffffff;rotation=-90;fillColor=#7c3aed;rounded=1;whiteSpace=wrap;" value="👩‍⚕️ CRC (Nurse)" vertex="1">
+          <mxGeometry height="30" width="120" x="-15" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="lane_crc_bg" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#faf5ff;strokeColor=#e9d5ff;strokeWidth=1;opacity=40;" value="" vertex="1">
+          <mxGeometry height="165" width="1500" x="50" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="lane_system" parent="1" style="text;html=1;fontSize=12;fontStyle=1;align=center;verticalAlign=middle;fontColor=#ffffff;rotation=-90;fillColor=#3b82f6;rounded=1;whiteSpace=wrap;" value="⚙️ System (Auto)" vertex="1">
+          <mxGeometry height="30" width="120" x="-15" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="lane_system_bg" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#eff6ff;strokeColor=#bfdbfe;strokeWidth=1;opacity=40;" value="" vertex="1">
+          <mxGeometry height="165" width="1500" x="50" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="lane_dm" parent="1" style="text;html=1;fontSize=12;fontStyle=1;align=center;verticalAlign=middle;fontColor=#ffffff;rotation=-90;fillColor=#0891b2;rounded=1;whiteSpace=wrap;" value="📊 Data Manager" vertex="1">
+          <mxGeometry height="30" width="120" x="-15" y="460" as="geometry" />
+        </mxCell>
+        <mxCell id="lane_dm_bg" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ecfeff;strokeColor=#a5f3fc;strokeWidth=1;opacity=40;" value="" vertex="1">
+          <mxGeometry height="165" width="1500" x="50" y="410" as="geometry" />
+        </mxCell>
+        <mxCell id="lane_safety" parent="1" style="text;html=1;fontSize=12;fontStyle=1;align=center;verticalAlign=middle;fontColor=#ffffff;rotation=-90;fillColor=#dc2626;rounded=1;whiteSpace=wrap;" value="⚠️ Safety / PI" vertex="1">
+          <mxGeometry height="30" width="120" x="-15" y="630" as="geometry" />
+        </mxCell>
+        <mxCell id="lane_safety_bg" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fef2f2;strokeColor=#fecaca;strokeWidth=1;opacity=40;" value="" vertex="1">
+          <mxGeometry height="165" width="1500" x="50" y="580" as="geometry" />
+        </mxCell>
+        <mxCell id="lane_monitor" parent="1" style="text;html=1;fontSize=12;fontStyle=1;align=center;verticalAlign=middle;fontColor=#ffffff;rotation=-90;fillColor=#059669;rounded=1;whiteSpace=wrap;" value="🔍 Monitor (CRA)" vertex="1">
+          <mxGeometry height="30" width="120" x="-15" y="800" as="geometry" />
+        </mxCell>
+        <mxCell id="lane_monitor_bg" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ecfdf5;strokeColor=#a7f3d0;strokeWidth=1;opacity=40;" value="" vertex="1">
+          <mxGeometry height="165" width="1500" x="50" y="750" as="geometry" />
+        </mxCell>
+        <mxCell id="lane_lab" parent="1" style="text;html=1;fontSize=12;fontStyle=1;align=center;verticalAlign=middle;fontColor=#ffffff;rotation=-90;fillColor=#ca8a04;rounded=1;whiteSpace=wrap;" value="🔬 Lab" vertex="1">
+          <mxGeometry height="30" width="120" x="-15" y="970" as="geometry" />
+        </mxCell>
+        <mxCell id="lane_lab_bg" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fefce8;strokeColor=#fef08a;strokeWidth=1;opacity=40;" value="" vertex="1">
+          <mxGeometry height="145" width="1500" x="50" y="920" as="geometry" />
+        </mxCell>
+        <mxCell id="crc_login" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e9d5ff;strokeColor=#a855f7;strokeWidth=1.5;fontSize=9;fontStyle=1;fontColor=#581c87;arcSize=15;" value="🔐 Login via&lt;br&gt;Keycloak SSO" vertex="1">
+          <mxGeometry height="50" width="100" x="70" y="90" as="geometry" />
+        </mxCell>
+        <mxCell id="crc_open_edc" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d1fae5;strokeColor=#10b981;strokeWidth=1.5;fontSize=9;fontStyle=1;fontColor=#065f46;arcSize=15;" value="📱 Open&lt;br&gt;Mobile EDC&lt;br&gt;&lt;font style=&quot;font-size:7px&quot;&gt;(tablet/phone)&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="100" x="200" y="90" as="geometry" />
+        </mxCell>
+        <mxCell id="crc_enroll" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d1fae5;strokeColor=#10b981;strokeWidth=2;fontSize=9;fontStyle=1;fontColor=#065f46;arcSize=15;" value="👶 Enroll&lt;br&gt;New Subject&lt;br&gt;&lt;font style=&quot;font-size:7px&quot;&gt;ETH-ADM-001-0005&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="110" x="330" y="90" as="geometry" />
+        </mxCell>
+        <mxCell id="crc_fill_crf" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d1fae5;strokeColor=#10b981;strokeWidth=2;fontSize=9;fontStyle=1;fontColor=#065f46;arcSize=15;" value="📋 Fill CRF&lt;br&gt;at Bedside&lt;br&gt;&lt;font style=&quot;font-size:7px&quot;&gt;Screening/48h/Day4&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="110" x="570" y="90" as="geometry" />
+        </mxCell>
+        <mxCell id="crc_esign" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d1fae5;strokeColor=#10b981;strokeWidth=1.5;fontSize=9;fontStyle=1;fontColor=#065f46;arcSize=15;" value="✍️ E-Sign&lt;br&gt;CRF&lt;br&gt;&lt;font style=&quot;font-size:7px&quot;&gt;PIN + Hash&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="85" x="710" y="90" as="geometry" />
+        </mxCell>
+        <mxCell id="crc_submit" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d1fae5;strokeColor=#10b981;strokeWidth=1.5;fontSize=9;fontStyle=1;fontColor=#065f46;arcSize=15;" value="📤 Submit&lt;br&gt;CRF&lt;br&gt;&lt;font style=&quot;font-size:7px&quot;&gt;Online/Offline&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="85" x="825" y="90" as="geometry" />
+        </mxCell>
+        <mxCell id="crc_view_lab" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e9d5ff;strokeColor=#a855f7;strokeWidth=1.5;fontSize=9;fontStyle=1;fontColor=#581c87;arcSize=15;" value="🔬 View Lab&lt;br&gt;Results&lt;br&gt;&lt;font style=&quot;font-size:7px&quot;&gt;Auto-imported&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="95" x="1050" y="90" as="geometry" />
+        </mxCell>
+        <mxCell id="crc_answer_query" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e9d5ff;strokeColor=#a855f7;strokeWidth=1.5;fontSize=9;fontStyle=1;fontColor=#581c87;arcSize=15;" value="💬 Answer&lt;br&gt;Query&lt;br&gt;&lt;font style=&quot;font-size:7px&quot;&gt;From DM&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="85" x="1180" y="90" as="geometry" />
+        </mxCell>
+        <mxCell id="crc_dashboard" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e9d5ff;strokeColor=#a855f7;strokeWidth=1.5;fontSize=9;fontStyle=1;fontColor=#581c87;arcSize=15;" value="📈 Check&lt;br&gt;Dashboard&lt;br&gt;&lt;font style=&quot;font-size:7px&quot;&gt;End of day&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="85" x="1400" y="90" as="geometry" />
+        </mxCell>
+        <mxCell id="offline_check" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fef3c7;strokeColor=#f59e0b;strokeWidth=1.5;fontSize=8;fontStyle=1;fontColor=#92400e;" value="📴 Online?" vertex="1">
+          <mxGeometry height="60" width="85" x="930" y="85" as="geometry" />
+        </mxCell>
+        <mxCell id="a1" edge="1" parent="1" source="crc_login" style="rounded=1;strokeColor=#a855f7;strokeWidth=1.5;" target="crc_open_edc">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a2" edge="1" parent="1" source="crc_open_edc" style="rounded=1;strokeColor=#10b981;strokeWidth=1.5;" target="crc_enroll">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a4" edge="1" parent="1" source="crc_fill_crf" style="rounded=1;strokeColor=#10b981;strokeWidth=1.5;" target="crc_esign">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a5" edge="1" parent="1" source="crc_esign" style="rounded=1;strokeColor=#10b981;strokeWidth=1.5;" target="crc_submit">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a6" edge="1" parent="1" source="crc_submit" style="rounded=1;strokeColor=#10b981;strokeWidth=1.5;" target="offline_check">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a7" edge="1" parent="1" source="crc_view_lab" style="rounded=1;strokeColor=#a855f7;strokeWidth=1;" target="crc_answer_query">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a10" edge="1" parent="1" source="crc_answer_query" style="rounded=1;strokeColor=#a855f7;strokeWidth=1;" target="crc_dashboard">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sys_save_subject" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#bfdbfe;strokeColor=#3b82f6;strokeWidth=1.5;fontSize=9;fontStyle=1;fontColor=#1e3a5f;arcSize=15;" value="💾 Save Subject&lt;br&gt;to PostgreSQL&lt;br&gt;&lt;font style=&quot;font-size:7px&quot;&gt;status: enrolled&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="110" x="330" y="260" as="geometry" />
+        </mxCell>
+        <mxCell id="sys_celery_oc" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fde68a;strokeColor=#f59e0b;strokeWidth=1.5;fontSize=9;fontStyle=1;fontColor=#78350f;arcSize=15;" value="🔄 Celery: Sync&lt;br&gt;to OpenClinica&lt;br&gt;&lt;font style=&quot;font-size:7px&quot;&gt;SOAP API&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="100" x="465" y="260" as="geometry" />
+        </mxCell>
+        <mxCell id="sys_visit_gen" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#bfdbfe;strokeColor=#3b82f6;strokeWidth=1.5;fontSize=9;fontStyle=1;fontColor=#1e3a5f;arcSize=15;" value="📅 Generate&lt;br&gt;Visit Schedule&lt;br&gt;&lt;font style=&quot;font-size:7px&quot;&gt;V1-V4 auto&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="100" x="465" y="330" as="geometry" />
+        </mxCell>
+        <mxCell id="sys_save_crf" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#bfdbfe;strokeColor=#3b82f6;strokeWidth=1.5;fontSize=9;fontStyle=1;fontColor=#1e3a5f;arcSize=15;" value="💾 Save CRF&lt;br&gt;FormInstance&lt;br&gt;&lt;font style=&quot;font-size:7px&quot;&gt;+ ItemResponses&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="100" x="825" y="260" as="geometry" />
+        </mxCell>
+        <mxCell id="sys_offline_sync" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fef3c7;strokeColor=#f59e0b;strokeWidth=1.5;fontSize=9;fontStyle=1;fontColor=#92400e;arcSize=15;" value="📴 IndexedDB&lt;br&gt;→ Background Sync&lt;br&gt;&lt;font style=&quot;font-size:7px&quot;&gt;When network returns&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="120" x="945" y="260" as="geometry" />
+        </mxCell>
+        <mxCell id="sys_audit" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#bfdbfe;strokeColor=#3b82f6;strokeWidth=1.5;fontSize=9;fontStyle=1;fontColor=#1e3a5f;arcSize=15;" value="📋 Audit Trail&lt;br&gt;Record&lt;br&gt;&lt;font style=&quot;font-size:7px&quot;&gt;Who/What/When&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="100" x="1090" y="260" as="geometry" />
+        </mxCell>
+        <mxCell id="sys_sae_deadline" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fee2e2;strokeColor=#ef4444;strokeWidth=2;fontSize=9;fontStyle=1;fontColor=#991b1b;arcSize=15;" value="⏱️ SAE Deadline&lt;br&gt;Auto-Compute&lt;br&gt;&lt;font style=&quot;font-size:7px&quot;&gt;7d fatal / 15d other&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="110" x="1220" y="260" as="geometry" />
+        </mxCell>
+        <mxCell id="sys_beat_email" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fee2e2;strokeColor=#ef4444;strokeWidth=1.5;fontSize=9;fontStyle=1;fontColor=#991b1b;arcSize=15;" value="📧 Celery Beat&lt;br&gt;Email Alerts&lt;br&gt;&lt;font style=&quot;font-size:7px&quot;&gt;50% · 90% · Overdue&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="110" x="1350" y="260" as="geometry" />
+        </mxCell>
+        <mxCell id="sa1" edge="1" parent="1" source="crc_enroll" style="rounded=1;strokeColor=#3b82f6;strokeWidth=1.5;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="sys_save_subject">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sa2" edge="1" parent="1" source="sys_save_subject" style="rounded=1;strokeColor=#f59e0b;strokeWidth=1.5;" target="sys_celery_oc">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sa2b" edge="1" parent="1" source="sys_save_subject" style="rounded=1;strokeColor=#3b82f6;strokeWidth=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" target="sys_visit_gen">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sa2c" edge="1" parent="1" source="sys_visit_gen" style="rounded=1;strokeColor=#10b981;strokeWidth=1.5;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;dashed=1;" target="crc_fill_crf">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sa3_label" connectable="0" parent="sa2c" style="edgeLabel;html=1;fontSize=7;fontColor=#10b981;" value="CRC sees visit schedule" vertex="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sa4" edge="1" parent="1" source="offline_check" style="rounded=1;strokeColor=#3b82f6;strokeWidth=1.5;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="sys_save_crf">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sa4_label" connectable="0" parent="sa4" style="edgeLabel;html=1;fontSize=8;fontColor=#3b82f6;fontStyle=1;" value="YES" vertex="1">
+          <mxGeometry relative="1" x="-0.2" as="geometry" />
+        </mxCell>
+        <mxCell id="sa5" edge="1" parent="1" source="offline_check" style="rounded=1;strokeColor=#f59e0b;strokeWidth=1.5;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="sys_offline_sync">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sa5_label" connectable="0" parent="sa5" style="edgeLabel;html=1;fontSize=8;fontColor=#f59e0b;fontStyle=1;" value="NO (offline)" vertex="1">
+          <mxGeometry relative="1" x="-0.2" y="-10" as="geometry" />
+        </mxCell>
+        <mxCell id="sa6" edge="1" parent="1" source="sys_save_crf" style="rounded=1;strokeColor=#3b82f6;strokeWidth=1;" target="sys_audit">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sa6b" edge="1" parent="1" source="sys_offline_sync" style="rounded=1;strokeColor=#3b82f6;strokeWidth=1;dashed=1;" target="sys_save_crf">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1005" y="340" />
+              <mxPoint x="875" y="340" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="sa7" edge="1" parent="1" source="sys_sae_deadline" style="rounded=1;strokeColor=#ef4444;strokeWidth=1.5;" target="sys_beat_email">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sa_lab_to_crc" edge="1" parent="1" source="sys_audit" style="rounded=1;strokeColor=#ca8a04;strokeWidth=1.5;dashed=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" target="crc_view_lab">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1140" y="200" />
+              <mxPoint x="1098" y="200" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dm_review" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#a5f3fc;strokeColor=#06b6d4;strokeWidth=1.5;fontSize=9;fontStyle=1;fontColor=#155e75;arcSize=15;" value="📊 Review&lt;br&gt;Submissions&lt;br&gt;&lt;font style=&quot;font-size:7px&quot;&gt;CRF quality check&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="100" x="200" y="430" as="geometry" />
+        </mxCell>
+        <mxCell id="dm_raise_query" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#a5f3fc;strokeColor=#06b6d4;strokeWidth=2;fontSize=9;fontStyle=1;fontColor=#155e75;arcSize=15;" value="💬 Raise&lt;br&gt;Data Query&lt;br&gt;&lt;font style=&quot;font-size:7px&quot;&gt;Discrepancy found&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="100" x="330" y="430" as="geometry" />
+        </mxCell>
+        <mxCell id="dm_close_query" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#a5f3fc;strokeColor=#06b6d4;strokeWidth=1.5;fontSize=9;fontStyle=1;fontColor=#155e75;arcSize=15;" value="✅ Close&lt;br&gt;Query&lt;br&gt;&lt;font style=&quot;font-size:7px&quot;&gt;After CRC answer&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="100" x="460" y="430" as="geometry" />
+        </mxCell>
+        <mxCell id="dm_quality" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#a5f3fc;strokeColor=#06b6d4;strokeWidth=1.5;fontSize=9;fontStyle=1;fontColor=#155e75;arcSize=15;" value="📈 Quality&lt;br&gt;Score&lt;br&gt;&lt;font style=&quot;font-size:7px&quot;&gt;Auto-calculated&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="100" x="590" y="430" as="geometry" />
+        </mxCell>
+        <mxCell id="dm_export" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#a5f3fc;strokeColor=#06b6d4;strokeWidth=1.5;fontSize=9;fontStyle=1;fontColor=#155e75;arcSize=15;" value="📤 Export&lt;br&gt;Data (CSV/ODM)&lt;br&gt;&lt;font style=&quot;font-size:7px&quot;&gt;For analysis&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="100" x="720" y="430" as="geometry" />
+        </mxCell>
+        <mxCell id="dm_lock" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#a5f3fc;strokeColor=#06b6d4;strokeWidth=2;fontSize=9;fontStyle=1;fontColor=#155e75;arcSize=15;dashed=1;" value="🔒 Database&lt;br&gt;Lock&lt;br&gt;&lt;font style=&quot;font-size:7px&quot;&gt;Study Admin action&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="100" x="850" y="430" as="geometry" />
+        </mxCell>
+        <mxCell id="da1" edge="1" parent="1" source="dm_review" style="rounded=1;strokeColor=#06b6d4;strokeWidth=1.5;" target="dm_raise_query">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="da2" edge="1" parent="1" source="dm_raise_query" style="rounded=1;strokeColor=#06b6d4;strokeWidth=1.5;" target="dm_close_query">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="da3" edge="1" parent="1" source="dm_close_query" style="rounded=1;strokeColor=#06b6d4;strokeWidth=1.5;" target="dm_quality">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="da4" edge="1" parent="1" source="dm_quality" style="rounded=1;strokeColor=#06b6d4;strokeWidth=1.5;" target="dm_export">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="da5" edge="1" parent="1" source="dm_export" style="rounded=1;strokeColor=#06b6d4;strokeWidth=1;dashed=1;" target="dm_lock">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sf_report" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fecaca;strokeColor=#ef4444;strokeWidth=2;fontSize=9;fontStyle=1;fontColor=#991b1b;arcSize=15;" value="⚠️ Report&lt;br&gt;AE/SAE&lt;br&gt;&lt;font style=&quot;font-size:7px&quot;&gt;Safety page&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="100" x="200" y="600" as="geometry" />
+        </mxCell>
+        <mxCell id="sf_cioms" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fecaca;strokeColor=#ef4444;strokeWidth=1.5;fontSize=9;fontStyle=1;fontColor=#991b1b;arcSize=15;" value="📋 CIOMS I&lt;br&gt;PDF Generated&lt;br&gt;&lt;font style=&quot;font-size:7px&quot;&gt;Auto-populated&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="100" x="330" y="600" as="geometry" />
+        </mxCell>
+        <mxCell id="sf_deadline" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fee2e2;strokeColor=#ef4444;strokeWidth=2;fontSize=9;fontStyle=1;fontColor=#991b1b;arcSize=15;" value="⏱️ Countdown&lt;br&gt;Timer&lt;br&gt;&lt;font style=&quot;font-size:7px&quot;&gt;7d / 15d&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="100" x="460" y="600" as="geometry" />
+        </mxCell>
+        <mxCell id="sf_submit_efda" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fecaca;strokeColor=#ef4444;strokeWidth=1.5;fontSize=9;fontStyle=1;fontColor=#991b1b;arcSize=15;" value="📤 Submit&lt;br&gt;to EFDA&lt;br&gt;&lt;font style=&quot;font-size:7px&quot;&gt;Email/portal&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="100" x="590" y="600" as="geometry" />
+        </mxCell>
+        <mxCell id="sf_mark_reported" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d1fae5;strokeColor=#10b981;strokeWidth=1.5;fontSize=9;fontStyle=1;fontColor=#065f46;arcSize=15;" value="✅ Mark&lt;br&gt;Reported&lt;br&gt;&lt;font style=&quot;font-size:7px&quot;&gt;On Monitoring page&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="100" x="720" y="600" as="geometry" />
+        </mxCell>
+        <mxCell id="sfa1" edge="1" parent="1" source="sf_report" style="rounded=1;strokeColor=#ef4444;strokeWidth=1.5;" target="sf_cioms">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sfa2" edge="1" parent="1" source="sf_cioms" style="rounded=1;strokeColor=#ef4444;strokeWidth=1.5;" target="sf_deadline">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sfa3" edge="1" parent="1" source="sf_deadline" style="rounded=1;strokeColor=#ef4444;strokeWidth=1.5;" target="sf_submit_efda">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sfa4" edge="1" parent="1" source="sf_submit_efda" style="rounded=1;strokeColor=#10b981;strokeWidth=1.5;" target="sf_mark_reported">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sf_sys" edge="1" parent="1" source="sf_report" style="rounded=1;strokeColor=#ef4444;strokeWidth=1.5;dashed=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" target="sys_sae_deadline">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="250" y="560" />
+              <mxPoint x="1275" y="560" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="sf_sys_label" connectable="0" parent="sf_sys" style="edgeLabel;html=1;fontSize=7;fontColor=#ef4444;fontStyle=1;" value="Auto-compute deadline" vertex="1">
+          <mxGeometry relative="1" x="0.5" y="-10" as="geometry" />
+        </mxCell>
+        <mxCell id="mon_rbm" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#a7f3d0;strokeColor=#059669;strokeWidth=2;fontSize=9;fontStyle=1;fontColor=#064e3b;arcSize=15;" value="🛡️ RBM&lt;br&gt;Dashboard&lt;br&gt;&lt;font style=&quot;font-size:7px&quot;&gt;/monitoring&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="100" x="200" y="770" as="geometry" />
+        </mxCell>
+        <mxCell id="mon_overview" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#a7f3d0;strokeColor=#059669;strokeWidth=1.5;fontSize=9;fontStyle=1;fontColor=#064e3b;arcSize=15;" value="📊 Study Risk&lt;br&gt;Overview&lt;br&gt;&lt;font style=&quot;font-size:7px&quot;&gt;6 KPI cards&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="100" x="330" y="770" as="geometry" />
+        </mxCell>
+        <mxCell id="mon_heatmap" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#a7f3d0;strokeColor=#059669;strokeWidth=2;fontSize=9;fontStyle=1;fontColor=#064e3b;arcSize=15;" value="🗺️ Site Risk&lt;br&gt;Heatmap&lt;br&gt;&lt;font style=&quot;font-size:7px&quot;&gt;Click to expand KPIs&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="110" x="460" y="770" as="geometry" />
+        </mxCell>
+        <mxCell id="mon_sae_view" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fee2e2;strokeColor=#ef4444;strokeWidth=1.5;fontSize=9;fontStyle=1;fontColor=#991b1b;arcSize=15;" value="⏱️ SAE&lt;br&gt;Timeline&lt;br&gt;&lt;font style=&quot;font-size:7px&quot;&gt;Countdowns&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="100" x="600" y="770" as="geometry" />
+        </mxCell>
+        <mxCell id="mon_action" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#a7f3d0;strokeColor=#059669;strokeWidth=1.5;fontSize=9;fontStyle=1;fontColor=#064e3b;arcSize=15;" value="📝 Take Action&lt;br&gt;&lt;font style=&quot;font-size:7px&quot;&gt;Schedule call · Report&lt;br&gt;Follow-up letter&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="110" x="730" y="770" as="geometry" />
+        </mxCell>
+        <mxCell id="ma1" edge="1" parent="1" source="mon_rbm" style="rounded=1;strokeColor=#059669;strokeWidth=1.5;" target="mon_overview">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ma2" edge="1" parent="1" source="mon_overview" style="rounded=1;strokeColor=#059669;strokeWidth=1.5;" target="mon_heatmap">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ma3" edge="1" parent="1" source="mon_heatmap" style="rounded=1;strokeColor=#059669;strokeWidth=1.5;" target="mon_sae_view">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ma4" edge="1" parent="1" source="mon_sae_view" style="rounded=1;strokeColor=#059669;strokeWidth=1.5;" target="mon_action">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lab_sample" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fef08a;strokeColor=#ca8a04;strokeWidth=1.5;fontSize=9;fontStyle=1;fontColor=#713f12;arcSize=15;" value="🧪 Receive&lt;br&gt;Sample&lt;br&gt;&lt;font style=&quot;font-size:7px&quot;&gt;From hospital&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="100" x="200" y="940" as="geometry" />
+        </mxCell>
+        <mxCell id="lab_test" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fef08a;strokeColor=#ca8a04;strokeWidth=1.5;fontSize=9;fontStyle=1;fontColor=#713f12;arcSize=15;" value="🔬 Run Test&lt;br&gt;in SENAITE&lt;br&gt;&lt;font style=&quot;font-size:7px&quot;&gt;CRP · CBC · Culture&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="100" x="330" y="940" as="geometry" />
+        </mxCell>
+        <mxCell id="lab_publish" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fef08a;strokeColor=#ca8a04;strokeWidth=1.5;fontSize=9;fontStyle=1;fontColor=#713f12;arcSize=15;" value="📤 Publish&lt;br&gt;Result&lt;br&gt;&lt;font style=&quot;font-size:7px&quot;&gt;In SENAITE&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="100" x="460" y="940" as="geometry" />
+        </mxCell>
+        <mxCell id="lab_webhook" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d1fae5;strokeColor=#10b981;strokeWidth=2;fontSize=9;fontStyle=1;fontColor=#065f46;arcSize=15;" value="🔔 Webhook&lt;br&gt;→ HACT CTMS&lt;br&gt;&lt;font style=&quot;font-size:7px&quot;&gt;Auto H/L/N flag&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="110" x="590" y="940" as="geometry" />
+        </mxCell>
+        <mxCell id="lab_review" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fef08a;strokeColor=#ca8a04;strokeWidth=1.5;fontSize=9;fontStyle=1;fontColor=#713f12;arcSize=15;" value="👁️ Lab Manager&lt;br&gt;Reviews&lt;br&gt;&lt;font style=&quot;font-size:7px&quot;&gt;On HACT CTMS&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="100" x="730" y="940" as="geometry" />
+        </mxCell>
+        <mxCell id="la1" edge="1" parent="1" source="lab_sample" style="rounded=1;strokeColor=#ca8a04;strokeWidth=1.5;" target="lab_test">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="la2" edge="1" parent="1" source="lab_test" style="rounded=1;strokeColor=#ca8a04;strokeWidth=1.5;" target="lab_publish">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="la3" edge="1" parent="1" source="lab_publish" style="rounded=1;strokeColor=#10b981;strokeWidth=2;" target="lab_webhook">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="la4" edge="1" parent="1" source="lab_webhook" style="rounded=1;strokeColor=#ca8a04;strokeWidth=1.5;" target="lab_review">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="legend" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#cbd5e1;strokeWidth=1;arcSize=8;" value="" vertex="1">
+          <mxGeometry height="150" width="250" x="1100" y="770" as="geometry" />
+        </mxCell>
+        <mxCell id="legend_t" parent="1" style="text;html=1;fontSize=11;fontStyle=1;align=center;verticalAlign=middle;fontColor=#334155;" value="LEGEND" vertex="1">
+          <mxGeometry height="20" width="80" x="1180" y="775" as="geometry" />
+        </mxCell>
+        <mxCell id="l1" parent="1" style="text;html=1;fontSize=9;align=left;fontColor=#065f46;fontStyle=1;" value="🟢 Mobile EDC (tablet, offline-first)" vertex="1">
+          <mxGeometry height="16" width="220" x="1110" y="800" as="geometry" />
+        </mxCell>
+        <mxCell id="l2" parent="1" style="text;html=1;fontSize=9;align=left;fontColor=#581c87;fontStyle=1;" value="🟣 HACT CTMS (desktop web app)" vertex="1">
+          <mxGeometry height="16" width="220" x="1110" y="818" as="geometry" />
+        </mxCell>
+        <mxCell id="l3" parent="1" style="text;html=1;fontSize=9;align=left;fontColor=#1e3a5f;fontStyle=1;" value="🔵 System (auto — Celery/webhook)" vertex="1">
+          <mxGeometry height="16" width="220" x="1110" y="836" as="geometry" />
+        </mxCell>
+        <mxCell id="l4" parent="1" style="text;html=1;fontSize=9;align=left;fontColor=#92400e;fontStyle=1;" value="🟡 Offline mode (IndexedDB sync)" vertex="1">
+          <mxGeometry height="16" width="220" x="1110" y="854" as="geometry" />
+        </mxCell>
+        <mxCell id="l5" parent="1" style="text;html=1;fontSize=9;align=left;fontColor=#991b1b;fontStyle=1;" value="🔴 SAE Reporting (7d/15d deadline)" vertex="1">
+          <mxGeometry height="16" width="220" x="1110" y="872" as="geometry" />
+        </mxCell>
+        <mxCell id="l6" parent="1" style="text;html=1;fontSize=9;align=left;fontColor=#713f12;fontStyle=1;" value="🟤 Lab (SENAITE → auto webhook)" vertex="1">
+          <mxGeometry height="16" width="220" x="1110" y="890" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

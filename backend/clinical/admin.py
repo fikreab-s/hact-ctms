@@ -7,12 +7,14 @@ from .models import (
     FormInstance,
     Item,
     ItemResponse,
+    ItemResponseAudit,
     Query,
     Site,
     Study,
     Subject,
     SubjectVisit,
     Visit,
+    VisitForm,
 )
 
 
@@ -93,3 +95,17 @@ class QueryAdmin(admin.ModelAdmin):
     list_filter = ("status",)
     search_fields = ("query_text", "response_text")
     autocomplete_fields = ("item_response", "raised_by", "resolved_by")
+
+
+@admin.register(VisitForm)
+class VisitFormAdmin(admin.ModelAdmin):
+    list_display = ("visit", "form", "is_required")
+    list_filter = ("is_required",)
+    autocomplete_fields = ("visit", "form")
+
+
+@admin.register(ItemResponseAudit)
+class ItemResponseAuditAdmin(admin.ModelAdmin):
+    list_display = ("item_response", "old_value", "new_value", "changed_by", "changed_at")
+    search_fields = ("item_response__item__field_name", "reason_for_change")
+    readonly_fields = ("item_response", "old_value", "new_value", "changed_by", "changed_at")

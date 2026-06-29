@@ -353,11 +353,34 @@ class Item(TimeStampedModel):
     field_label = models.CharField(max_length=500)
     field_type = models.CharField(max_length=20, choices=FIELD_TYPE_CHOICES, default="text")
     required = models.BooleanField(default=False)
+    section = models.CharField(
+        max_length=200,
+        blank=True,
+        default="",
+        help_text="Section header — items with the same section are visually grouped.",
+    )
     validation_rule = models.CharField(
         max_length=500,
         blank=True,
         default="",
-        help_text="Regex or custom validation rule.",
+        help_text="Regex or custom validation rule, e.g. range(0, 59).",
+    )
+    cross_field_validation = models.JSONField(
+        null=True,
+        blank=True,
+        help_text=(
+            'JSONB — cross-field rules, e.g. '
+            '{"gte": "CONSENT_DATE", "message": "Must be on or after consent date"}'
+        ),
+    )
+    display_condition = models.JSONField(
+        null=True,
+        blank=True,
+        help_text=(
+            'JSONB — skip logic condition. Field is shown only when this evaluates true. '
+            'Format: {"field": "ENROLLED", "operator": "eq", "value": "1"} '
+            'Operators: eq, neq, in, gt, lt, gte, lte, not_empty.'
+        ),
     )
     options = models.JSONField(
         null=True,
@@ -420,6 +443,12 @@ class FormInstance(TimeStampedModel):
         choices=STATUS_CHOICES,
         default="draft",
         db_index=True,
+    )
+    submission_uuid = models.UUIDField(
+        null=True,
+        blank=True,
+        unique=True,
+        help_text="Client-generated UUID for offline deduplication.",
     )
     submitted_at = models.DateTimeField(null=True, blank=True)
     signed_by = models.ForeignKey(
@@ -535,3 +564,83 @@ class Query(TimeStampedModel):
 
     def __str__(self):
         return f"Q-{self.pk}: {self.query_text[:60]}..."
+
+
+# =============================================================================
+# VisitForm — Maps which CRFs are assigned to which visits
+# =============================================================================
+class VisitForm(models.Model):
+    """Junction table: which forms (CRFs) are assigned to which visits.
+
+    If no VisitForm rows exist for a study, ALL forms are shown at every visit
+    (backwards-compatible default). When rows exist, only mapped forms appear.
+    """
+
+    visit = models.ForeignKey(
+        Visit,
+        on_delete=models.CASCADE,
+        related_name="visit_forms",
+    )
+    form = models.ForeignKey(
+        Form,
+        on_delete=models.CASCADE,
+        related_name="visit_forms",
+    )
+    is_required = models.BooleanField(
+        default=True,
+        help_text="If true, this form must be filled at this visit.",
+    )
+
+    class Meta:
+        db_table = "clinical_visit_forms"
+        verbose_name = "Visit-Form Mapping"
+        verbose_name_plural = "Visit-Form Mappings"
+        unique_together = [("visit", "form")]
+
+    def __str__(self):
+        return f"{self.visit.visit_name} ↔ {self.form.name}"
+
+
+# =============================================================================
+# ItemResponseAudit — Field-level change history (21 CFR Part 11)
+# =============================================================================
+class ItemResponseAudit(models.Model):
+    """Audit trail for every field-level change.
+
+    Whenever an ItemResponse value is changed, a new audit row is created
+    with the old value, new value, who changed it, when, and why.
+    Required by ICH E6(R3) and 21 CFR Part 11.
+    """
+
+    item_response = models.ForeignKey(
+        ItemResponse,
+        on_delete=models.CASCADE,
+        related_name="audit_trail",
+    )
+    old_value = models.TextField(blank=True, default="")
+    new_value = models.TextField(blank=True, default="")
+    reason_for_change = models.CharField(
+        max_length=500,
+        blank=True,
+        default="",
+        help_text="Why was this field changed? Required for submitted CRFs.",
+    )
+    changed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="item_response_audits",
+    )
+    changed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "clinical_item_response_audit"
+        verbose_name = "Item Response Audit"
+        verbose_name_plural = "Item Response Audit Trail"
+        ordering = ["-changed_at"]
+
+    def __str__(self):
+        return (
+            f"{self.item_response.item.field_name}: "
+            f"'{self.old_value}' → '{self.new_value}'"
+        )
