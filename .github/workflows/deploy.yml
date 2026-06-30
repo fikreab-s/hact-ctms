@@ -63,11 +63,14 @@ jobs:
       # -----------------------------------------------------------------------
       # 4. Upload frontend build to server
       # -----------------------------------------------------------------------
-      - name: Upload frontend dist
+      - name: Tar dist directory
+        run: tar -czf dist.tar.gz -C frontend dist
+
+      - name: Upload frontend dist archive
         run: |
-          gcloud compute scp --recurse \
-            frontend/dist \
-            fikreab@${{ secrets.VM_INSTANCE }}:/home/fikreab/hact-ctms/frontend/dist \
+          gcloud compute scp \
+            dist.tar.gz \
+            fikreab@${{ secrets.VM_INSTANCE }}:/home/fikreab/hact-ctms/frontend/dist.tar.gz \
             --zone=${{ secrets.GCP_ZONE }} \
             --project=${{ secrets.GCP_PROJECT_ID }}
 
@@ -83,6 +86,11 @@ jobs:
               cd /home/fikreab/hact-ctms &&
               echo '=== Pulling latest code ===' &&
               git pull origin main &&
+              echo '=== Extracting frontend assets ===' &&
+              mkdir -p frontend/dist &&
+              rm -rf frontend/dist/* &&
+              tar -xzf frontend/dist.tar.gz -C frontend/dist --strip-components=1 &&
+              rm -f frontend/dist.tar.gz &&
               echo '=== Rebuilding Docker images ===' &&
               sudo docker compose build django-api celery-worker celery-beat &&
               echo '=== Restarting containers ===' &&
