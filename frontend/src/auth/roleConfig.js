@@ -181,7 +181,7 @@ export function canPerformAction(userRoles, isSuperuser, actionKey) {
  */
 export function getSidebarRoutes(userRoles, isSuperuser) {
   if (isSuperuser) {
-    return ['/', '/studies', '/subjects', '/queries', '/safety', '/lab', '/audit', '/integrations']
+    return ['/', '/studies', '/subjects', '/queries', '/safety', '/lab', '/monitoring', '/audit', '/integrations']
   }
 
   const routes = new Set()
@@ -202,6 +202,7 @@ export const ROUTE_LABELS = {
   '/queries': 'Queries',
   '/safety': 'Safety',
   '/lab': 'Laboratory',
+  '/monitoring': 'Monitoring',
   '/audit': 'Audit Trail',
   '/integrations': 'Integrations',
   '/edc': 'Mobile EDC',
