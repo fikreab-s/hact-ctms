@@ -116,4 +116,35 @@ apiClient.interceptors.response.use(
   }
 )
 
+/**
+ * Download an auth-protected file through the API client so the Bearer token
+ * (and 401→refresh handling) is applied — then trigger a browser save.
+ *
+ * The API returns URLs like `/api/v1/outputs/snapshots/7/download/`; the axios
+ * client already prefixes `/api/v1/`, so we strip it to get the relative path.
+ * Using `window.open()` on these URLs fails because a plain navigation does not
+ * carry the Authorization header, yielding a 401.
+ */
+export async function downloadFile(downloadUrl) {
+  const relative = String(downloadUrl).replace(/^\/?api\/v1\//, '').replace(/^\//, '')
+  const res = await apiClient.get(relative, { responseType: 'blob' })
+
+  const contentType = res.headers['content-type'] || 'application/octet-stream'
+  const disposition = res.headers['content-disposition'] || ''
+  const match = /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(disposition)
+  const filename = match
+    ? decodeURIComponent(match[1])
+    : relative.replace(/\/+$/, '').split('/').filter(Boolean).slice(-2, -1)[0] || 'download'
+
+  const blobUrl = URL.createObjectURL(new Blob([res.data], { type: contentType }))
+  const a = document.createElement('a')
+  a.href = blobUrl
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(blobUrl)
+  return filename
+}
+
 export default apiClient

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { FiAlertTriangle, FiPlus, FiFileText, FiDownload } from 'react-icons/fi'
 import { useAdverseEvents, useCreateAdverseEvent, useSubjects, useCreateCiomsForm, useGenerateCiomsPdf } from '../api/queries'
+import { downloadFile } from '../api/client'
 import StatusBadge from '../components/StatusBadge'
 import LoadingSpinner from '../components/LoadingSpinner'
 import EmptyState from '../components/EmptyState'
@@ -25,7 +26,7 @@ export default function SafetyPage() {
       const cioms = await createCioms.mutateAsync({ adverse_event: aeId, status: 'draft' })
       const result = await generatePdf.mutateAsync(cioms.id)
       toast.success('CIOMS I PDF generated!')
-      if (result.download_url) window.open(result.download_url, '_blank')
+      if (result.download_url) await downloadFile(result.download_url)
     } catch (err) {
       toast.error(err.response?.data?.detail || 'Failed to generate CIOMS PDF')
     }

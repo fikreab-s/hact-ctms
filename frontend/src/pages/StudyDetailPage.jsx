@@ -11,6 +11,7 @@ import {
 import StatusBadge from '../components/StatusBadge'
 import LoadingSpinner from '../components/LoadingSpinner'
 import usePermission from '../auth/usePermission'
+import { downloadFile } from '../api/client'
 import toast from 'react-hot-toast'
 
 export default function StudyDetailPage() {
@@ -104,7 +105,7 @@ export default function StudyDetailPage() {
     try {
       const result = await fn.mutateAsync({ study: parseInt(id) })
       toast.success(`${type.toUpperCase()} export generated!`)
-      if (result.download_url) window.open(result.download_url, '_blank')
+      if (result.download_url) await downloadFile(result.download_url)
     } catch (err) {
       toast.error(err.response?.data?.detail || `${type.toUpperCase()} export failed`)
     }

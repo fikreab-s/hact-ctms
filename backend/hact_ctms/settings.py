@@ -139,9 +139,13 @@ NEXTCLOUD_ADMIN_USER = os.getenv("NEXTCLOUD_ADMIN_USER")
 NEXTCLOUD_ADMIN_PASSWORD = os.getenv("NEXTCLOUD_ADMIN_PASSWORD")
 
 # ERPNext Operations Integration
+# Auth: prefer API key/secret; fall back to username/password session login.
 ERPNEXT_URL = os.getenv("ERPNEXT_URL")
 ERPNEXT_API_KEY = os.getenv("ERPNEXT_API_KEY")
 ERPNEXT_API_SECRET = os.getenv("ERPNEXT_API_SECRET")
+ERPNEXT_USERNAME = os.getenv("ERPNEXT_USERNAME", "Administrator")
+ERPNEXT_PASSWORD = os.getenv("ERPNEXT_PASSWORD")
+ERPNEXT_SITE_NAME = os.getenv("ERPNEXT_SITE_NAME", "hact.local")
 
 # SENAITE Laboratory Integration
 SENAITE_URL = os.getenv("SENAITE_URL", "http://senaite:8080")
