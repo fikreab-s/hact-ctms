@@ -39,7 +39,7 @@ logger = logging.getLogger("hact.integrations.nextcloud")
 
 NC_BASE_URL = os.environ.get("NEXTCLOUD_URL", "http://nextcloud:80")
 NC_USER = os.environ.get("NEXTCLOUD_ADMIN_USER", "admin")
-NC_PASSWORD = os.environ.get("NEXTCLOUD_ADMIN_PASSWORD", "hact-nc-2026")
+NC_PASSWORD = os.environ.get("NEXTCLOUD_ADMIN_PASSWORD", "Admin@2026!")
 
 # WebDAV base path for Nextcloud
 WEBDAV_BASE = f"{NC_BASE_URL}/remote.php/dav/files/{NC_USER}"
