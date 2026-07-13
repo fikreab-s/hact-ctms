@@ -22,7 +22,7 @@
 | System | URL | Username | Password | Purpose |
 |--------|-----|----------|----------|---------|
 | **SENAITE LIMS** | https://ctms.hacts.org/senaite/ | `admin` | `admin` | Laboratory Information Management |
-| **Nextcloud eTMF** | https://ctms.hacts.org/nextcloud/ | `admin` | `Admin@2026` | Electronic Trial Master File |
+| **Nextcloud eTMF** | https://ctms.hacts.org/nextcloud/ | `admin` | `Admin@2026!` | Electronic Trial Master File |
 | **ERPNext** | https://ctms.hacts.org/erpnext/ | `Administrator` | `Admin@2026!` | Supply Chain & Finance |
 | **OpenClinica** | https://ctms.hacts.org/openclinica/ | `root` | `12345678` | Electronic Data Capture (CRF Schema) |
 
@@ -110,7 +110,7 @@ Open each system in a new tab to prove the full stack is operational:
 
 **Tab 2 — Nextcloud eTMF**:
 - URL: https://ctms.hacts.org/nextcloud/
-- Login: `admin` / `Admin@2026`
+- Login: `admin` / `Admin@2026!`
 - **✅ Verify**: Files page loads, can create folders
 
 **Tab 3 — ERPNext**:
@@ -547,7 +547,7 @@ Login: `root` / `12345678`
 
 **In Nextcloud** → https://ctms.hacts.org/nextcloud/
 
-Login: `admin` / `Admin@2026`
+Login: `admin` / `Admin@2026!`
 
 1. Navigate to **Files** → Look for `eTMF/` folder (or create it)
 2. If auto-created by HACT CTMS: Browse `eTMF/HACT-PSBI-ETH-2026/`
@@ -703,7 +703,7 @@ Login: `Administrator` / `Admin@2026!`
 | Dashboard shows empty | Create a study first (Step 4). Data populates after enrollment |
 | Mobile EDC shows no subjects | Ensure subject is enrolled (Step 6). Check site assignment |
 | SENAITE login fails | Use `admin` / `admin` — note lowercase |
-| Nextcloud login fails | Use `admin` / `Admin@2026` — no exclamation mark |
+| Nextcloud login fails | Use `admin` / `Admin@2026!` — no exclamation mark |
 | ERPNext login fails | Use `Administrator` (capital A) / `Admin@2026!` — with exclamation |
 | OpenClinica login fails | Use `root` / `12345678` |
 | SAE submit returns 400 error | Ensure all required fields are filled, especially Subject |
