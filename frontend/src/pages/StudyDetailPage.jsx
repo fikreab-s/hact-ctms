@@ -2,10 +2,10 @@ import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import {
   FiArrowLeft, FiMapPin, FiUsers, FiCalendar, FiAlertTriangle,
-  FiPlus, FiDownload, FiFileText, FiFlag, FiCheckCircle, FiClock,
+  FiPlus, FiDownload, FiFileText, FiFlag, FiCheckCircle, FiClock, FiEdit2,
 } from 'react-icons/fi'
 import {
-  useStudy, useSubjects, useTransitionStudy, useCreateSite,
+  useStudy, useSubjects, useTransitionStudy, useCreateSite, useUpdateStudy,
   useExportCSV, useExportODM, useMilestones, useCreateMilestone, useUpdateMilestone,
 } from '../api/queries'
 import StatusBadge from '../components/StatusBadge'
@@ -20,6 +20,7 @@ export default function StudyDetailPage() {
   const { data: subjectsData } = useSubjects({ study: id })
   const transition = useTransitionStudy()
   const createSite = useCreateSite()
+  const updateStudy = useUpdateStudy()
   const exportCSV = useExportCSV()
   const exportODM = useExportODM()
   const { data: milestonesData } = useMilestones({ study: id })
@@ -27,6 +28,7 @@ export default function StudyDetailPage() {
   const updateMilestone = useUpdateMilestone()
   const [showCreateSite, setShowCreateSite] = useState(false)
   const [showCreateMilestone, setShowCreateMilestone] = useState(false)
+  const [showEdit, setShowEdit] = useState(false)
 
   if (isLoading) return <LoadingSpinner text="Loading study..." />
   if (!study) return <p className="text-slate-500 p-6">Study not found.</p>
@@ -47,6 +49,29 @@ export default function StudyDetailPage() {
       toast.success(`Study transitioned to ${nextStatus}`)
     } catch (err) {
       toast.error(err.response?.data?.status?.[0] || err.response?.data?.detail || 'Transition failed')
+    }
+  }
+
+  const handleEdit = async (e) => {
+    e.preventDefault()
+    const form = new FormData(e.target)
+    try {
+      await updateStudy.mutateAsync({
+        id: study.id,
+        name: form.get('name'),
+        sponsor: form.get('sponsor'),
+        phase: form.get('phase'),
+        start_date: form.get('start_date') || null,
+        openclinica_study_oid: form.get('openclinica_study_oid')?.trim() || '',
+      })
+      toast.success('Study updated')
+      setShowEdit(false)
+    } catch (err) {
+      const detail = err.response?.data
+      const message = typeof detail === 'object'
+        ? Object.values(detail).flat().join(', ')
+        : detail?.detail || 'Failed to update study'
+      toast.error(message)
     }
   }
 
@@ -126,6 +151,15 @@ export default function StudyDetailPage() {
           </div>
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <StatusBadge status={study.status} className="text-sm px-3 py-1" />
+            {can('CREATE_STUDY') && !isLocked && (
+              <button
+                onClick={() => setShowEdit(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-2 border border-border text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
+                id="edit-study-btn"
+              >
+                <FiEdit2 className="w-4 h-4" /> Edit
+              </button>
+            )}
             {can('TRANSITION_STUDY') && nextStatus && (
               <button
                 onClick={handleTransition}
@@ -189,10 +223,16 @@ export default function StudyDetailPage() {
       </div>
 
       {/* Info + Sponsor */}
-      <div className="bg-card rounded-xl border border-border p-5 grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+      <div className="bg-card rounded-xl border border-border p-5 grid grid-cols-1 sm:grid-cols-4 gap-4 text-sm">
         <div><span className="text-slate-500 block text-xs mb-1">Sponsor</span><span className="font-medium text-slate-700">{study.sponsor || '—'}</span></div>
         <div><span className="text-slate-500 block text-xs mb-1">Start Date</span><span className="font-medium text-slate-700">{study.start_date || '—'}</span></div>
         <div><span className="text-slate-500 block text-xs mb-1">Open Queries</span><span className="font-medium text-rose-600">{study.open_queries_count || 0}</span></div>
+        <div>
+          <span className="text-slate-500 block text-xs mb-1">OpenClinica OID</span>
+          {study.openclinica_study_oid
+            ? <span className="font-medium text-slate-700 font-mono">{study.openclinica_study_oid}</span>
+            : <span className="font-medium text-amber-600">Not linked</span>}
+        </div>
       </div>
 
       {/* Sites Table */}
@@ -355,6 +395,55 @@ export default function StudyDetailPage() {
                 <button type="button" onClick={() => setShowCreateMilestone(false)} className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg">Cancel</button>
                 <button type="submit" disabled={createMilestone.isPending} className="px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-lg disabled:opacity-50">
                   {createMilestone.isPending ? 'Creating...' : 'Add Milestone'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Study Modal */}
+      {can('CREATE_STUDY') && showEdit && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setShowEdit(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 p-6" onClick={e => e.stopPropagation()}>
+            <h2 className="text-lg font-semibold text-slate-800 mb-1">Edit Study</h2>
+            <p className="text-sm text-slate-500 mb-5">{study.protocol_number}</p>
+            <form onSubmit={handleEdit} className="space-y-4" id="edit-study-form">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Study Name *</label>
+                <input name="name" required defaultValue={study.name} className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Phase</label>
+                  <select name="phase" defaultValue={study.phase} className="w-full px-3 py-2 border border-border rounded-lg text-sm bg-white">
+                    <option value="I">Phase I</option>
+                    <option value="II">Phase II</option>
+                    <option value="III">Phase III</option>
+                    <option value="IV">Phase IV</option>
+                    <option value="I/II">Phase I/II</option>
+                    <option value="II/III">Phase II/III</option>
+                    <option value="NA">Not Applicable</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Start Date</label>
+                  <input name="start_date" type="date" defaultValue={study.start_date || ''} className="w-full px-3 py-2 border border-border rounded-lg text-sm" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Sponsor</label>
+                <input name="sponsor" defaultValue={study.sponsor} className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">OpenClinica Study OID</label>
+                <input name="openclinica_study_oid" defaultValue={study.openclinica_study_oid} className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30 font-mono" placeholder="S_HACTPSBI (optional)" />
+                <p className="text-xs text-slate-400 mt-1">Links this study to an existing OpenClinica study so enrolled subjects and submitted forms sync to the EDC. Leave blank to disable OpenClinica sync.</p>
+              </div>
+              <div className="flex justify-end gap-3 pt-2">
+                <button type="button" onClick={() => setShowEdit(false)} className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg">Cancel</button>
+                <button type="submit" disabled={updateStudy.isPending} className="px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-lg disabled:opacity-50">
+                  {updateStudy.isPending ? 'Saving...' : 'Save Changes'}
                 </button>
               </div>
             </form>
