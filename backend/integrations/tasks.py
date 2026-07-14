@@ -262,6 +262,38 @@ def create_etmf_for_study(self, protocol_number: str):
     bind=True,
     max_retries=3,
     default_retry_delay=30,
+    name="integrations.create_site_etmf",
+)
+def create_site_etmf(self, protocol_number: str, site_code: str):
+    """
+    Create the per-site eTMF subfolder tree in Nextcloud for a new site.
+    Called when a Site is created in Django.
+    """
+    from integrations.nextcloud import create_site_etmf_folder, is_available
+
+    if not is_available():
+        logger.warning(
+            "Nextcloud not available — retrying in 30s (site=%s/%s)",
+            protocol_number, site_code,
+        )
+        raise self.retry(exc=Exception("Nextcloud not available"))
+
+    try:
+        ok = create_site_etmf_folder(protocol_number, site_code)
+        if ok:
+            logger.info("✅ eTMF site folder created in Nextcloud for %s / %s", protocol_number, site_code)
+            return {"status": "success", "protocol": protocol_number, "site": site_code}
+        raise self.retry(exc=Exception("eTMF site folder creation failed"))
+
+    except Exception as e:
+        logger.exception("Error creating eTMF site folder for %s / %s", protocol_number, site_code)
+        raise self.retry(exc=e)
+
+
+@shared_task(
+    bind=True,
+    max_retries=3,
+    default_retry_delay=30,
     name="integrations.upload_document_to_etmf",
 )
 def upload_document_to_etmf(

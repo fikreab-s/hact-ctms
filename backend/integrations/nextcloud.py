@@ -18,6 +18,7 @@ eTMF Folder Structure (auto-created per study):
     ├── 04_DataManagement/      # CRF snapshots, DB lock records
     ├── 05_Monitoring/          # Monitoring visit reports
     ├── 06_SiteDocuments/       # Site-specific documents
+    │   └── {SITE_CODE}/        # Auto-created per site (see SITE_ETMF_SUBFOLDERS)
     ├── 07_Contracts/           # Contracts, budgets
     ├── 08_Training/            # GCP certs, training logs
     ├── 09_Exports/             # CDISC/SDTM exports, data snapshots
@@ -57,6 +58,17 @@ ETMF_FOLDERS = [
     "08_Training",
     "09_Exports",
     "10_Correspondence",
+]
+
+# Per-site subfolders created under 06_SiteDocuments/{SITE_CODE}/.
+# These map to the site-level essential documents in the TMF Reference Model.
+SITE_ETMF_SUBFOLDERS = [
+    "Regulatory_Approvals",
+    "Informed_Consent",
+    "Delegation_And_Training",
+    "Monitoring_Visits",
+    "IP_Accountability",
+    "Site_Correspondence",
 ]
 
 
@@ -276,6 +288,50 @@ def create_etmf_structure(protocol_number: str) -> bool:
 
     if success:
         logger.info("✅ eTMF structure created for %s (%d folders)", protocol_number, len(ETMF_FOLDERS))
+    return success
+
+
+def create_site_etmf_folder(protocol_number: str, site_code: str) -> bool:
+    """
+    Create the per-site subfolder tree under a study's eTMF.
+
+    Layout: eTMF/{protocol}/06_SiteDocuments/{site_code}/<subfolders>
+
+    Idempotent — folders that already exist are treated as success. Parent
+    folders are ensured in case the study eTMF was not provisioned yet.
+
+    Args:
+        protocol_number: Study protocol (e.g. "HACT-001")
+        site_code: Site code (e.g. "ETH-ADM-001")
+
+    Returns:
+        True if the site folder tree was created successfully.
+    """
+    base = f"eTMF/{protocol_number}/06_SiteDocuments/{site_code}"
+    logger.info("Creating eTMF site folder: %s", base)
+
+    # Ensure parents exist (idempotent) in case the study eTMF is not ready.
+    for parent in (
+        "eTMF",
+        f"eTMF/{protocol_number}",
+        f"eTMF/{protocol_number}/06_SiteDocuments",
+        base,
+    ):
+        if not create_folder(parent):
+            logger.error("Failed to create eTMF folder: %s", parent)
+            return False
+
+    success = True
+    for sub in SITE_ETMF_SUBFOLDERS:
+        if not create_folder(f"{base}/{sub}"):
+            success = False
+            logger.error("Failed to create site eTMF subfolder: %s/%s", base, sub)
+
+    if success:
+        logger.info(
+            "✅ eTMF site folder created for %s / %s (%d subfolders)",
+            protocol_number, site_code, len(SITE_ETMF_SUBFOLDERS),
+        )
     return success
 
 
