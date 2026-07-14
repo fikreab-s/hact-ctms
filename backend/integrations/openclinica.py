@@ -45,6 +45,11 @@ NS = {
 # SOAP Envelope Builder
 # =============================================================================
 
+def _localname(tag: str) -> str:
+    """Return an XML tag's local name, stripping any '{namespace}' prefix."""
+    return tag.rsplit("}", 1)[-1] if "}" in tag else tag
+
+
 def _build_soap_envelope(body_xml: str) -> str:
     """Wrap a SOAP body in the standard envelope with OC WS Security header.
 
@@ -219,11 +224,26 @@ def list_study_subjects(study_oid: str, site_oid: str = "") -> list:
     if root is None:
         return []
 
+    # The listAllByStudy response returns each subject in the studySubject/v1
+    # namespace (not beans), so match by local element name to be robust to
+    # whichever namespace OpenClinica emits. De-duplicate by label.
     subjects = []
-    for subj in root.iter("{http://openclinica.org/ws/beans}studySubject"):
-        label = subj.findtext("{http://openclinica.org/ws/beans}label", "")
-        oid = subj.findtext("{http://openclinica.org/ws/beans}secondaryLabel", "")
-        subjects.append({"label": label, "oid": oid})
+    seen = set()
+    for subj in root.iter():
+        if _localname(subj.tag) != "studySubject":
+            continue
+        label = ""
+        oid = ""
+        for child in subj.iter():
+            ln = _localname(child.tag)
+            text = (child.text or "").strip()
+            if ln == "label" and not label:
+                label = text
+            elif ln in ("subjectOID", "oid", "secondaryLabel") and text and not oid:
+                oid = text
+        if label and label not in seen:
+            seen.add(label)
+            subjects.append({"label": label, "oid": oid})
     return subjects
 
 
@@ -346,6 +366,27 @@ def diagnostic(
     if study_identifier:
         out["studies_parsed"] = list_studies()
         out["subjects_for_identifier"] = list_study_subjects(study_identifier)
+
+        # Raw listAllByStudy so the response structure is visible for debugging.
+        subj_body = f"""<sub:listAllByStudyRequest>
+          <sub:studyRef>
+            <beans:identifier>{study_identifier}</beans:identifier>
+          </sub:studyRef>
+        </sub:listAllByStudyRequest>"""
+        subj_url = f"{OC_WS_URL}/ws/studySubject/v1"
+        try:
+            resp = requests.post(
+                subj_url,
+                data=_build_soap_envelope(subj_body).encode("utf-8"),
+                headers={"Content-Type": "text/xml; charset=utf-8", "SOAPAction": "listAllByStudy"},
+                timeout=20,
+            )
+            out["listAllByStudy_raw"] = {
+                "http_status": resp.status_code,
+                "snippet": (resp.text or "")[:900],
+            }
+        except requests.exceptions.RequestException as e:
+            out["listAllByStudy_raw"] = {"error": str(e)}
 
     if create_label and study_identifier:
         import datetime
