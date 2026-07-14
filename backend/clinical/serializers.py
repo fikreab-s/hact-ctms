@@ -435,6 +435,7 @@ class ItemSerializer(serializers.ModelSerializer):
             "required", "section", "validation_rule",
             "cross_field_validation", "display_condition",
             "options", "order",
+            "openclinica_item_oid", "openclinica_item_group_oid",
             "created_at", "updated_at",
         ]
         read_only_fields = ("id", "created_at", "updated_at")

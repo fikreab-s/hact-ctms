@@ -243,6 +243,42 @@ def openclinica_diagnostic(request):
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
+def import_openclinica_metadata(request):
+    """
+    Import CRF metadata (visits, forms, items) from OpenClinica into CTMS.
+
+    POST /api/v1/integrations/openclinica/import-metadata/
+    Body: { "study_id": 4, "dry_run": true }
+
+    - dry_run=true (default): parse + preview what would be created/updated,
+      write nothing (also returns a raw ODM snippet for debugging).
+    - dry_run=false: upsert the CTMS Visit/Form/Item/VisitForm rows and store
+      the real OpenClinica OIDs so captured data round-trips back to OC.
+    """
+    from clinical.models import Study
+    from integrations.metadata_import import import_study_metadata
+
+    study_id = request.data.get("study_id")
+    dry_run = bool(request.data.get("dry_run", True))
+
+    if not study_id:
+        return Response(
+            {"error": "study_id is required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+    try:
+        study = Study.objects.get(pk=study_id)
+    except Study.DoesNotExist:
+        return Response(
+            {"error": "Study not found"}, status=status.HTTP_404_NOT_FOUND
+        )
+
+    result = import_study_metadata(study, dry_run=dry_run)
+    http = status.HTTP_200_OK if result.get("ok") else status.HTTP_400_BAD_REQUEST
+    return Response(result, status=http)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
 def erpnext_webhook(request):
     """
     Webhook endpoint for ERPNext events.

@@ -37,6 +37,12 @@ urlpatterns = [
         views.openclinica_diagnostic,
         name="openclinica-diagnostic",
     ),
+    # Import CRF metadata (visits/forms/items) from OpenClinica into CTMS
+    path(
+        "openclinica/import-metadata/",
+        views.import_openclinica_metadata,
+        name="openclinica-import-metadata",
+    ),
     # ERPNext Webhook
     path(
         "erpnext/webhook/contract-signed/",

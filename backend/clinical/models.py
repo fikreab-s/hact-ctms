@@ -402,6 +402,21 @@ class Item(TimeStampedModel):
     )
     order = models.PositiveIntegerField(default=0)
 
+    # Integration: OpenClinica (populated when a CRF is imported from OC's ODM
+    # metadata — these are the *real* OC OIDs, used to round-trip data back).
+    openclinica_item_oid = models.CharField(
+        max_length=100,
+        blank=True,
+        default="",
+        help_text="OpenClinica ItemDef OID, e.g. 'I_SCREE_WEIGHT'.",
+    )
+    openclinica_item_group_oid = models.CharField(
+        max_length=100,
+        blank=True,
+        default="",
+        help_text="OpenClinica ItemGroupDef OID that contains this item, e.g. 'IG_SCREE_UNGRP'.",
+    )
+
     class Meta:
         db_table = "clinical_items"
         verbose_name = "Form Item (Field)"

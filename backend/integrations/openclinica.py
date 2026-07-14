@@ -446,16 +446,33 @@ def build_odm_for_form_instance(form_instance) -> str:
     study_oid = study.openclinica_study_oid or f"S_{study.protocol_number}"
     subject_key = subject.subject_identifier
 
-    # Build ItemData elements from responses
-    item_data_elements = []
+    # Group ItemData by the item's *real* OpenClinica ItemGroup OID. When a CRF
+    # was imported from OpenClinica these OIDs are stored on each Item, so data
+    # lands in the correct group; otherwise we fall back to a single default
+    # group and name-derived OIDs (best effort, legacy behaviour).
+    from xml.sax.saxutils import escape as _xml_escape
+
+    groups = {}
     for response in form_instance.responses.select_related("item").all():
-        item_oid = f"I_{response.item.field_name.upper()}"
-        value = response.value or ""
-        item_data_elements.append(
+        item = response.item
+        item_oid = item.openclinica_item_oid or f"I_{item.field_name.upper()}"
+        group_oid = item.openclinica_item_group_oid or "IG_DEFAULT"
+        value = _xml_escape(response.value or "", {'"': "&quot;"})
+        groups.setdefault(group_oid, []).append(
             f'<ItemData ItemOID="{item_oid}" Value="{value}"/>'
         )
 
-    items_xml = "\n            ".join(item_data_elements)
+    group_blocks = []
+    for group_oid, item_els in groups.items():
+        items_xml = "\n            ".join(item_els)
+        group_blocks.append(
+            f'<ItemGroupData ItemGroupOID="{group_oid}" TransactionType="Insert">\n'
+            f'            {items_xml}\n'
+            f'          </ItemGroupData>'
+        )
+    groups_xml = "\n          ".join(group_blocks) or (
+        '<ItemGroupData ItemGroupOID="IG_DEFAULT" TransactionType="Insert"/>'
+    )
 
     # Get event OID if available
     event_oid = "SE_VISIT"
@@ -475,9 +492,7 @@ def build_odm_for_form_instance(form_instance) -> str:
     <SubjectData SubjectKey="{subject_key}">
       <StudyEventData StudyEventOID="{event_oid}">
         <FormData FormOID="{form_oid}">
-          <ItemGroupData ItemGroupOID="IG_DEFAULT" TransactionType="Insert">
-            {items_xml}
-          </ItemGroupData>
+          {groups_xml}
         </FormData>
       </StudyEventData>
     </SubjectData>

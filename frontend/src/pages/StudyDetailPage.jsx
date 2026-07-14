@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import {
   FiArrowLeft, FiMapPin, FiUsers, FiCalendar, FiAlertTriangle,
-  FiPlus, FiDownload, FiFileText, FiFlag, FiCheckCircle, FiClock, FiEdit2,
+  FiPlus, FiDownload, FiFileText, FiFlag, FiCheckCircle, FiClock, FiEdit2, FiDownloadCloud,
 } from 'react-icons/fi'
 import {
   useStudy, useSubjects, useTransitionStudy, useCreateSite, useUpdateStudy,
@@ -11,7 +12,7 @@ import {
 import StatusBadge from '../components/StatusBadge'
 import LoadingSpinner from '../components/LoadingSpinner'
 import usePermission from '../auth/usePermission'
-import { downloadFile } from '../api/client'
+import apiClient, { downloadFile } from '../api/client'
 import toast from 'react-hot-toast'
 
 export default function StudyDetailPage() {
@@ -30,6 +31,8 @@ export default function StudyDetailPage() {
   const [showCreateSite, setShowCreateSite] = useState(false)
   const [showCreateMilestone, setShowCreateMilestone] = useState(false)
   const [showEdit, setShowEdit] = useState(false)
+  const [ocImport, setOcImport] = useState(null) // { loading } | { preview } | { applying }
+  const queryClient = useQueryClient()
 
   if (isLoading) return <LoadingSpinner text="Loading study..." />
   if (!study) return <p className="text-slate-500 p-6">Study not found.</p>
@@ -74,6 +77,36 @@ export default function StudyDetailPage() {
         ? Object.values(detail).flat().join(', ')
         : detail?.detail || 'Failed to update study'
       toast.error(message)
+    }
+  }
+
+  const runOcImport = async (apply) => {
+    try {
+      setOcImport(apply ? { applying: true } : { loading: true })
+      const res = await apiClient.post('integrations/openclinica/import-metadata/', {
+        study_id: study.id,
+        dry_run: !apply,
+      })
+      const data = res.data
+      if (!data.ok) {
+        toast.error(data.error || 'Import failed')
+        setOcImport(null)
+        return
+      }
+      if (apply) {
+        const t = (o) => (o.created || 0) + (o.updated || 0)
+        toast.success(
+          `Imported from OpenClinica — ${t(data.forms)} forms, ${t(data.items)} items, ${t(data.visits)} visits`
+        )
+        setOcImport(null)
+        queryClient.invalidateQueries({ queryKey: ['study', String(study.id)] })
+        queryClient.invalidateQueries({ queryKey: ['study', study.id] })
+      } else {
+        setOcImport({ preview: data })
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.error || err.message || 'Import failed')
+      setOcImport(null)
     }
   }
 
@@ -160,6 +193,18 @@ export default function StudyDetailPage() {
                 id="edit-study-btn"
               >
                 <FiEdit2 className="w-4 h-4" /> Edit
+              </button>
+            )}
+            {can('CREATE_STUDY') && (study.openclinica_study_identifier || study.openclinica_study_oid) && (
+              <button
+                onClick={() => runOcImport(false)}
+                disabled={!!ocImport}
+                title="Import visits, CRFs and fields from OpenClinica so the mobile EDC reuses the same definitions"
+                className="inline-flex items-center gap-1.5 px-3 py-2 border border-indigo-200 text-sm font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors disabled:opacity-50"
+                id="import-oc-crf-btn"
+              >
+                <FiDownloadCloud className="w-4 h-4" />
+                {ocImport?.loading ? 'Checking…' : 'Import CRFs from OpenClinica'}
               </button>
             )}
             {can('TRANSITION_STUDY') && nextStatus && (
@@ -406,6 +451,56 @@ export default function StudyDetailPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Import CRFs from OpenClinica — preview + confirm */}
+      {ocImport?.preview && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setOcImport(null)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 p-6 max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <h2 className="text-lg font-semibold text-slate-800 mb-1">Import CRFs from OpenClinica</h2>
+            <p className="text-sm text-slate-500 mb-4">
+              OpenClinica study <span className="font-mono">{ocImport.preview.identifier}</span> — this will create/update the mobile-EDC visit &amp; form definitions in CTMS. Data you already captured is preserved.
+            </p>
+            <div className="grid grid-cols-3 gap-3 mb-4">
+              {[['Visits', ocImport.preview.counts.events], ['Forms', ocImport.preview.counts.forms], ['Fields', ocImport.preview.counts.items]].map(([label, n]) => (
+                <div key={label} className="p-3 bg-slate-50 border border-border rounded-xl text-center">
+                  <div className="text-2xl font-bold text-slate-800">{n}</div>
+                  <div className="text-xs text-slate-500">{label}</div>
+                </div>
+              ))}
+            </div>
+            <div className="space-y-3 mb-5">
+              {(ocImport.preview.preview?.forms || []).map((f) => (
+                <div key={f.oid} className="border border-border rounded-xl p-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-slate-800">{f.name}</span>
+                    <span className="text-xs text-slate-400 font-mono">{f.oid} · {f.item_count} fields</span>
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {f.items.map((it) => (
+                      <span key={it.name} className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 rounded text-[11px] text-slate-600">
+                        {it.label || it.name}
+                        <span className="text-slate-400">({it.type}{it.options ? `·${it.options}` : ''}{it.required ? '·req' : ''})</span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              {(ocImport.preview.preview?.events || []).length > 0 && (
+                <div className="text-xs text-slate-500">
+                  Visit→form mapping: {ocImport.preview.preview.events.map(e => `${e.name} [${(e.forms || []).join(', ') || '—'}]`).join('  ·  ')}
+                </div>
+              )}
+            </div>
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setOcImport(null)} className="px-4 py-2 border border-border text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-lg">Cancel</button>
+              <button onClick={() => runOcImport(true)} disabled={ocImport.applying}
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg disabled:opacity-50">
+                {ocImport.applying ? 'Importing…' : 'Confirm import'}
+              </button>
+            </div>
           </div>
         </div>
       )}
