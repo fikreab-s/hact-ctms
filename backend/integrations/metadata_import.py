@@ -50,6 +50,7 @@ def import_study_metadata(study, dry_run=False):
                 f"'{identifier}'. Check the study exists in OC, is 'available', "
                 "and the WS account is authorized."
             ),
+            "debug": openclinica.get_metadata_debug(identifier),
         }
 
     parsed = parse_odm_metadata(odm_xml)

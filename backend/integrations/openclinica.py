@@ -152,7 +152,30 @@ def get_study_metadata(study_oid: str) -> str:
     odm_el = root.find(".//{http://www.cdisc.org/ns/odm/v1.3}ODM")
     if odm_el is not None:
         return ET.tostring(odm_el, encoding="unicode")
+    # Some OC builds return the ODM as an escaped string inside <odm>…</odm>.
+    for el in root.iter():
+        if _localname(el.tag) == "odm" and (el.text or "").strip().startswith("<"):
+            return el.text
     return None
+
+
+def get_metadata_debug(identifier: str) -> dict:
+    """Return the raw getMetadata SOAP response for debugging (no parsing)."""
+    body = f"""<v1:getMetadataRequest>
+      <v1:studyMetadata>
+        <beans:identifier>{identifier}</beans:identifier>
+      </v1:studyMetadata>
+    </v1:getMetadataRequest>"""
+    url = f"{OC_WS_URL}/ws/study/v1"
+    headers = {"Content-Type": "text/xml; charset=utf-8", "SOAPAction": "getMetadata"}
+    try:
+        resp = requests.post(
+            url, data=_build_soap_envelope(body).encode("utf-8"),
+            headers=headers, timeout=30,
+        )
+        return {"http_status": resp.status_code, "snippet": (resp.text or "")[:4000]}
+    except requests.exceptions.RequestException as e:
+        return {"error": str(e)}
 
 
 # =============================================================================
