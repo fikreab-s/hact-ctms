@@ -102,6 +102,7 @@ class StudyDetailSerializer(serializers.ModelSerializer):
         fields = [
             "id", "name", "protocol_number", "phase", "sponsor",
             "start_date", "end_date", "status", "openclinica_study_oid",
+            "openclinica_study_identifier",
             "site_count", "subject_count", "enrolled_count",
             "open_queries_count",
             "sites", "visits", "forms",

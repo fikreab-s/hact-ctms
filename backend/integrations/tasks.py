@@ -40,19 +40,24 @@ def sync_subject_to_openclinica(self, subject_id: int):
 
         subject = Subject.objects.select_related("study", "site").get(id=subject_id)
 
-        study_oid = subject.study.openclinica_study_oid
-        if not study_oid:
+        # OpenClinica SOAP web services match a study by its **Unique Protocol ID**
+        # (study:unique_identifier), NOT the S_… OID. Prefer the dedicated field;
+        # fall back to the OID field (legacy) only if the identifier is unset.
+        study = subject.study
+        study_identifier = study.openclinica_study_identifier or study.openclinica_study_oid
+        if not study_identifier:
             logger.info(
-                "Study %s has no OC OID — skipping OC sync for subject %s",
-                subject.study.protocol_number,
+                "Study %s has no OpenClinica identifier — skipping OC sync for subject %s",
+                study.protocol_number,
                 subject.subject_identifier,
             )
-            return {"status": "skipped", "reason": "no_study_oid"}
+            return {"status": "skipped", "reason": "no_study_identifier"}
 
+        # Site is matched by its Unique (Site) Protocol ID, which we mirror as site_code.
         site_oid = subject.site.site_code if subject.site else ""
 
         result = create_study_subject(
-            study_oid=study_oid,
+            study_oid=study_identifier,
             site_oid=site_oid,
             subject_label=subject.subject_identifier,
             enrollment_date=str(subject.enrollment_date or subject.created_at.date()),
@@ -190,19 +195,21 @@ def schedule_event_in_openclinica(
         subject = Subject.objects.select_related("study").get(id=subject_id)
         visit = Visit.objects.get(id=visit_id)
 
-        study_oid = subject.study.openclinica_study_oid
+        # SOAP EventService matches the study by Unique Protocol ID, not the OID.
+        study = subject.study
+        study_identifier = study.openclinica_study_identifier or study.openclinica_study_oid
         event_oid = visit.openclinica_event_definition_oid
 
-        if not study_oid or not event_oid:
+        if not study_identifier or not event_oid:
             logger.info(
-                "Missing OC OIDs — skipping event schedule (study_oid=%s, event_oid=%s)",
-                study_oid,
+                "Missing OC identifiers — skipping event schedule (study=%s, event_oid=%s)",
+                study_identifier,
                 event_oid,
             )
             return {"status": "skipped", "reason": "missing_oids"}
 
         result = schedule_event(
-            study_oid=study_oid,
+            study_oid=study_identifier,
             subject_label=subject.subject_identifier,
             event_definition_oid=event_oid,
             start_date=start_date,

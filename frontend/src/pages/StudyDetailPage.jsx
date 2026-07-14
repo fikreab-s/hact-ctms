@@ -64,6 +64,7 @@ export default function StudyDetailPage() {
         phase: form.get('phase'),
         start_date: form.get('start_date') || null,
         openclinica_study_oid: form.get('openclinica_study_oid')?.trim() || '',
+        openclinica_study_identifier: form.get('openclinica_study_identifier')?.trim() || '',
       })
       toast.success('Study updated')
       setShowEdit(false)
@@ -229,10 +230,16 @@ export default function StudyDetailPage() {
         <div><span className="text-slate-500 block text-xs mb-1">Start Date</span><span className="font-medium text-slate-700">{study.start_date || '—'}</span></div>
         <div><span className="text-slate-500 block text-xs mb-1">Open Queries</span><span className="font-medium text-rose-600">{study.open_queries_count || 0}</span></div>
         <div>
+          <span className="text-slate-500 block text-xs mb-1">OpenClinica Protocol ID</span>
+          {study.openclinica_study_identifier
+            ? <span className="font-medium text-slate-700 font-mono">{study.openclinica_study_identifier}</span>
+            : <span className="font-medium text-amber-600">Not linked</span>}
+        </div>
+        <div>
           <span className="text-slate-500 block text-xs mb-1">OpenClinica OID</span>
           {study.openclinica_study_oid
             ? <span className="font-medium text-slate-700 font-mono">{study.openclinica_study_oid}</span>
-            : <span className="font-medium text-amber-600">Not linked</span>}
+            : <span className="font-medium text-amber-600">—</span>}
         </div>
       </div>
 
@@ -437,9 +444,14 @@ export default function StudyDetailPage() {
                 <input name="sponsor" defaultValue={study.sponsor} className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30" />
               </div>
               <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">OpenClinica Unique Protocol ID</label>
+                <input name="openclinica_study_identifier" defaultValue={study.openclinica_study_identifier} className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30 font-mono" placeholder="HACTPSBIV2 (optional)" />
+                <p className="text-xs text-slate-400 mt-1">The OpenClinica study's "Unique Protocol ID". Required for enrolled subjects to sync to the EDC. This is NOT the S_… OID.</p>
+              </div>
+              <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">OpenClinica Study OID</label>
                 <input name="openclinica_study_oid" defaultValue={study.openclinica_study_oid} className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30 font-mono" placeholder="S_HACTPSBI (optional)" />
-                <p className="text-xs text-slate-400 mt-1">Links this study to an existing OpenClinica study so enrolled subjects and submitted forms sync to the EDC. Leave blank to disable OpenClinica sync.</p>
+                <p className="text-xs text-slate-400 mt-1">The OpenClinica-generated Study OID (used when importing form data). Leave blank to disable OpenClinica sync.</p>
               </div>
               <div className="flex justify-end gap-3 pt-2">
                 <button type="button" onClick={() => setShowEdit(false)} className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg">Cancel</button>
