@@ -432,7 +432,9 @@ class ItemSerializer(serializers.ModelSerializer):
         model = Item
         fields = [
             "id", "form", "field_name", "field_label", "field_type",
-            "required", "validation_rule", "options", "order",
+            "required", "section", "validation_rule",
+            "cross_field_validation", "display_condition",
+            "options", "order",
             "created_at", "updated_at",
         ]
         read_only_fields = ("id", "created_at", "updated_at")
