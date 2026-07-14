@@ -236,7 +236,9 @@ def openclinica_diagnostic(request):
     from integrations.openclinica import diagnostic
 
     study_identifier = request.query_params.get("study_identifier", "")
-    return Response(diagnostic(study_identifier))
+    create_label = request.query_params.get("create_label", "")
+    site_identifier = request.query_params.get("site_identifier", "")
+    return Response(diagnostic(study_identifier, create_label, site_identifier))
 
 
 @api_view(["POST"])

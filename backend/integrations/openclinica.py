@@ -304,13 +304,19 @@ def is_available() -> bool:
         return False
 
 
-def diagnostic(study_identifier: str = "") -> dict:
+def diagnostic(
+    study_identifier: str = "",
+    create_label: str = "",
+    site_identifier: str = "",
+) -> dict:
     """Return a detailed snapshot of OpenClinica WS connectivity for debugging.
 
     Performs a real authenticated ``listAll`` (Study service) and, optionally,
     ``listAllByStudy`` for a given study identifier, returning the raw HTTP
     status and a response snippet so auth/endpoint issues are visible without
-    server shell access. Safe: read-only, no data is written.
+    server shell access. Read-only unless ``create_label`` is supplied, in
+    which case it attempts a real ``createStudySubject`` and returns the raw
+    result/error (used to surface data-level validation problems).
     """
     out = {
         "base_url": OC_BASE_URL,
@@ -340,6 +346,45 @@ def diagnostic(study_identifier: str = "") -> dict:
     if study_identifier:
         out["studies_parsed"] = list_studies()
         out["subjects_for_identifier"] = list_study_subjects(study_identifier)
+
+    if create_label and study_identifier:
+        import datetime
+
+        site_ref = ""
+        if site_identifier:
+            site_ref = (
+                f"<beans:siteRef><beans:identifier>{site_identifier}"
+                f"</beans:identifier></beans:siteRef>"
+            )
+        create_body = f"""<sub:createRequest>
+          <sub:studySubject>
+            <beans:label>{create_label}</beans:label>
+            <beans:enrollmentDate>{datetime.date.today()}</beans:enrollmentDate>
+            <beans:subject>
+              <beans:uniqueIdentifier>{create_label}</beans:uniqueIdentifier>
+              <beans:gender>m</beans:gender>
+            </beans:subject>
+            <beans:studyRef>
+              <beans:identifier>{study_identifier}</beans:identifier>
+              {site_ref}
+            </beans:studyRef>
+          </sub:studySubject>
+        </sub:createRequest>"""
+        create_url = f"{OC_WS_URL}/ws/studySubject/v1"
+        try:
+            resp = requests.post(
+                create_url,
+                data=_build_soap_envelope(create_body).encode("utf-8"),
+                headers={"Content-Type": "text/xml; charset=utf-8", "SOAPAction": "create"},
+                timeout=20,
+            )
+            out["create_probe"] = {
+                "endpoint": create_url,
+                "http_status": resp.status_code,
+                "snippet": (resp.text or "")[:800],
+            }
+        except requests.exceptions.RequestException as e:
+            out["create_probe"] = {"endpoint": create_url, "error": str(e)}
 
     return out
 
