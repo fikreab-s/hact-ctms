@@ -221,6 +221,24 @@ def integration_status(request):
     return Response(result)
 
 
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def openclinica_diagnostic(request):
+    """
+    Read-only OpenClinica SOAP web-service diagnostic.
+
+    GET /api/v1/integrations/openclinica/diagnostic/?study_identifier=HACTPSBIV2
+
+    Returns WS config, an authenticated listAll probe (raw HTTP status +
+    snippet), and — when study_identifier is given — the studies/subjects
+    OpenClinica reports. Helps distinguish auth vs endpoint vs data issues.
+    """
+    from integrations.openclinica import diagnostic
+
+    study_identifier = request.query_params.get("study_identifier", "")
+    return Response(diagnostic(study_identifier))
+
+
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def erpnext_webhook(request):

@@ -31,6 +31,12 @@ urlpatterns = [
         views.integration_status,
         name="integration-status",
     ),
+    # OpenClinica WS diagnostic (read-only)
+    path(
+        "openclinica/diagnostic/",
+        views.openclinica_diagnostic,
+        name="openclinica-diagnostic",
+    ),
     # ERPNext Webhook
     path(
         "erpnext/webhook/contract-signed/",

@@ -46,8 +46,13 @@ NS = {
 # =============================================================================
 
 def _build_soap_envelope(body_xml: str) -> str:
-    """Wrap a SOAP body in the standard envelope with OC WS Security header."""
-    password_hash = hashlib.md5(OC_ADMIN_PASSWORD.encode()).hexdigest()
+    """Wrap a SOAP body in the standard envelope with OC WS Security header.
+
+    OpenClinica SOAP web services require the password to be hashed with
+    **SHA-1** (not MD5) and supplied in the WS-Security UsernameToken.
+    See the OpenClinica Web Services Guide, "Using OpenClinica Web Services".
+    """
+    password_hash = hashlib.sha1(OC_ADMIN_PASSWORD.encode()).hexdigest()
     return (
         '<soapenv:Envelope'
         ' xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"'
@@ -113,7 +118,7 @@ def _send_soap_request(service_path: str, soap_action: str, body_xml: str) -> ET
 def list_studies() -> list:
     """List all studies in OpenClinica via SOAP ListAll."""
     body = "<v1:listAllRequest/>"
-    root = _send_soap_request("StudyService", "listAll", body)
+    root = _send_soap_request("study/v1", "listAll", body)
     if root is None:
         return []
 
@@ -135,7 +140,7 @@ def get_study_metadata(study_oid: str) -> str:
         <beans:identifier>{study_oid}</beans:identifier>
       </v1:studyMetadata>
     </v1:getMetadataRequest>"""
-    root = _send_soap_request("StudyService", "getMetadata", body)
+    root = _send_soap_request("study/v1", "getMetadata", body)
     if root is None:
         return None
     # Return the raw ODM XML string
@@ -177,7 +182,7 @@ def create_study_subject(
       </sub:studySubject>
     </sub:createRequest>"""
 
-    root = _send_soap_request("StudySubjectService", "create", body)
+    root = _send_soap_request("studySubject/v1", "create", body)
     if root is None:
         return {"success": False, "error": "OpenClinica not reachable"}
 
@@ -210,7 +215,7 @@ def list_study_subjects(study_oid: str, site_oid: str = "") -> list:
       </sub:studyRef>
     </sub:listAllByStudyRequest>"""
 
-    root = _send_soap_request("StudySubjectService", "listAllByStudy", body)
+    root = _send_soap_request("studySubject/v1", "listAllByStudy", body)
     if root is None:
         return []
 
@@ -246,7 +251,7 @@ def schedule_event(
       </event:event>
     </event:scheduleRequest>"""
 
-    root = _send_soap_request("EventService", "schedule", body)
+    root = _send_soap_request("event/v1", "schedule", body)
     if root is None:
         return {"success": False, "error": "OpenClinica not reachable"}
 
@@ -272,7 +277,7 @@ def import_data_odm(odm_xml: str) -> dict:
       <data:odm><![CDATA[{odm_xml}]]></data:odm>
     </data:importRequest>"""
 
-    root = _send_soap_request("DataImportService", "import", body)
+    root = _send_soap_request("data/v1", "import", body)
     if root is None:
         return {"success": False, "error": "OpenClinica not reachable"}
 
@@ -297,6 +302,46 @@ def is_available() -> bool:
         return resp.status_code in (200, 302)
     except requests.exceptions.RequestException:
         return False
+
+
+def diagnostic(study_identifier: str = "") -> dict:
+    """Return a detailed snapshot of OpenClinica WS connectivity for debugging.
+
+    Performs a real authenticated ``listAll`` (Study service) and, optionally,
+    ``listAllByStudy`` for a given study identifier, returning the raw HTTP
+    status and a response snippet so auth/endpoint issues are visible without
+    server shell access. Safe: read-only, no data is written.
+    """
+    out = {
+        "base_url": OC_BASE_URL,
+        "ws_url": OC_WS_URL,
+        "admin_user": OC_ADMIN_USER,
+        "password_configured": bool(os.environ.get("OPENCLINICA_ADMIN_PASSWORD")),
+        "password_hash_algo": "sha1",
+        "reachable_main": is_available(),
+    }
+
+    envelope = _build_soap_envelope("<v1:listAllRequest/>")
+    url = f"{OC_WS_URL}/ws/study/v1"
+    headers = {"Content-Type": "text/xml; charset=utf-8", "SOAPAction": "listAll"}
+    try:
+        resp = requests.post(url, data=envelope.encode("utf-8"), headers=headers, timeout=20)
+        text = resp.text or ""
+        out["listAll"] = {
+            "endpoint": url,
+            "http_status": resp.status_code,
+            "result": ("success" if "<ns1:result>Success</ns1:result>" in text
+                       or ">Success<" in text else "not-success"),
+            "snippet": text[:600],
+        }
+    except requests.exceptions.RequestException as e:
+        out["listAll"] = {"endpoint": url, "error": str(e)}
+
+    if study_identifier:
+        out["studies_parsed"] = list_studies()
+        out["subjects_for_identifier"] = list_study_subjects(study_identifier)
+
+    return out
 
 
 # =============================================================================
