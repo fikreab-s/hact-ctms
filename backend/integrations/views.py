@@ -364,3 +364,40 @@ def senaite_webhook(request):
             )
 
     return Response({"status": "ignored", "message": f"Sample status is {sample_status}"})
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def senaite_pull_results(request):
+    """
+    On-demand trigger for the SENAITE -> CTMS lab-result pull (same logic the
+    Celery beat runs every 15 min). Runs synchronously and returns what was
+    fetched from SENAITE plus how many LabResults were imported/skipped, which
+    makes it usable both as a "Sync lab results now" action and for diagnostics.
+
+    POST /api/v1/integrations/senaite/pull-results/
+    Body (optional): { "study_id": 4 }
+    """
+    from integrations.senaite import fetch_published_results
+    from integrations.tasks import pull_results_from_senaite
+
+    study_id = request.data.get("study_id")
+
+    fetched = fetch_published_results(client_title="HACT Clinical Trials")
+
+    try:
+        outcome = pull_results_from_senaite.apply(kwargs={"study_id": study_id}).result
+    except Exception as e:  # surface task errors instead of hiding them
+        logger.exception("Manual SENAITE pull failed")
+        return Response(
+            {"error": str(e), "fetched_count": len(fetched)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+    return Response(
+        {
+            "fetched_count": len(fetched),
+            "fetched_preview": fetched[:8],
+            "task_result": str(outcome),
+        }
+    )

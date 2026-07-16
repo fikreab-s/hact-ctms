@@ -55,4 +55,10 @@ urlpatterns = [
         views.senaite_webhook,
         name="senaite-webhook",
     ),
+    # SENAITE — trigger the published-results pull on demand (also diagnostic)
+    path(
+        "senaite/pull-results/",
+        views.senaite_pull_results,
+        name="senaite-pull-results",
+    ),
 ]
