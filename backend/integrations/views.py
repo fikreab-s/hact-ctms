@@ -378,10 +378,35 @@ def senaite_pull_results(request):
     POST /api/v1/integrations/senaite/pull-results/
     Body (optional): { "study_id": 4 }
     """
+    import requests as _requests
+    from django.conf import settings as _settings
+
+    from integrations import senaite as _sen
     from integrations.senaite import fetch_published_results
     from integrations.tasks import pull_results_from_senaite
 
     study_id = request.data.get("study_id")
+
+    # --- diagnostics: show exactly what the container sees from SENAITE ---
+    debug = {"senaite_url": _sen.SENAITE_URL, "api_user": _sen.SENAITE_USER, "api_base": _sen.API_BASE}
+    try:
+        ar = _requests.get(
+            f"{_sen.API_BASE}/search",
+            params={"portal_type": "AnalysisRequest", "review_state": "published",
+                    "getClientTitle": "HACT Clinical Trials", "complete": "yes", "limit": 50},
+            auth=_sen._auth(), timeout=15,
+        )
+        debug["ar_status"] = ar.status_code
+        debug["ar_count"] = len((ar.json() or {}).get("items", [])) if ar.ok else None
+        an = _requests.get(
+            f"{_sen.API_BASE}/search",
+            params={"portal_type": "Analysis", "review_state": "published", "complete": "yes", "limit": 200},
+            auth=_sen._auth(), timeout=15,
+        )
+        debug["analysis_status"] = an.status_code
+        debug["analysis_count"] = len((an.json() or {}).get("items", [])) if an.ok else None
+    except Exception as e:  # noqa: BLE001
+        debug["diag_error"] = str(e)
 
     fetched = fetch_published_results(client_title="HACT Clinical Trials")
 
@@ -396,6 +421,7 @@ def senaite_pull_results(request):
 
     return Response(
         {
+            "debug": debug,
             "fetched_count": len(fetched),
             "fetched_preview": fetched[:8],
             "task_result": str(outcome),
