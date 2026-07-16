@@ -19,8 +19,30 @@ logger = logging.getLogger("hact.integrations.senaite")
 SENAITE_URL = getattr(settings, "SENAITE_URL", "http://senaite:8080")
 SENAITE_USER = getattr(settings, "SENAITE_API_USER", "")
 SENAITE_PASSWORD = getattr(settings, "SENAITE_API_PASSWORD", "")
+# Plone site id that SENAITE lives under (public URL is https://.../senaite/...).
+SENAITE_SITE_ID = getattr(settings, "SENAITE_SITE_ID", "senaite")
 
-API_BASE = f"{SENAITE_URL}/@@API/senaite/v1"
+
+def _api_base(url: str, site_id: str) -> str:
+    """
+    Build the SENAITE JSON API base.
+
+    The REST API lives *inside* the Plone site, at ``<host>/<site_id>/@@API/...``.
+    If ``SENAITE_URL`` is configured as a bare host (e.g. ``http://senaite:8080``)
+    with no path, we append the site id — otherwise a search hits Zope's root
+    catalog and silently returns zero items (while ``/@@API/senaite/v1/`` still
+    answers 200, so health checks look fine).
+    """
+    from urllib.parse import urlparse
+
+    base = (url or "").rstrip("/")
+    path = urlparse(base).path.strip("/")
+    if not path and site_id:
+        base = f"{base}/{site_id}"
+    return f"{base}/@@API/senaite/v1"
+
+
+API_BASE = _api_base(SENAITE_URL, SENAITE_SITE_ID)
 
 
 def _auth():
