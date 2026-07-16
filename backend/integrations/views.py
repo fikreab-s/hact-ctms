@@ -405,6 +405,21 @@ def senaite_pull_results(request):
         )
         debug["analysis_status"] = an.status_code
         debug["analysis_count"] = len((an.json() or {}).get("items", [])) if an.ok else None
+        # who does SENAITE think we are? (bad Basic-auth password -> Anonymous, still 200)
+        cu = _requests.get(f"{_sen.API_BASE}/users/current", auth=_sen._auth(), timeout=15)
+        try:
+            cu_items = (cu.json() or {}).get("items", [{}])
+            debug["current_user"] = cu_items[0].get("userid") or cu_items[0].get("username") or cu_items[0]
+        except Exception:  # noqa: BLE001
+            debug["current_user"] = cu.text[:120]
+        debug["current_user_status"] = cu.status_code
+        # AR count with NO client filter, to isolate the getClientTitle filter
+        ar_all = _requests.get(
+            f"{_sen.API_BASE}/search",
+            params={"portal_type": "AnalysisRequest", "complete": "no", "limit": 5},
+            auth=_sen._auth(), timeout=15,
+        )
+        debug["ar_all_count"] = len((ar_all.json() or {}).get("items", [])) if ar_all.ok else None
     except Exception as e:  # noqa: BLE001
         debug["diag_error"] = str(e)
 
