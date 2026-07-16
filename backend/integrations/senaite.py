@@ -141,17 +141,25 @@ def create_sample(sample_data: dict) -> dict:
 
 def fetch_published_results(client_title: str = None, limit: int = 50) -> list:
     """
-    Fetch published/verified analysis results from SENAITE.
+    Fetch published analysis results from SENAITE.
+
+    NOTE: An AnalysisRequest's ``Analyses`` field, as returned by the SENAITE
+    JSON API, contains only *reference stubs* (``{url, uid, api_url}``) — it does
+    NOT embed the result value/title/unit. We therefore query the ``Analysis``
+    objects directly (which expose ``getResult``, ``title``, ``getUnit`` and the
+    parent ``getRequestID``) and join them back to their published sample to
+    recover the ``ClientSampleID`` used for CTMS subject mapping.
 
     Args:
         client_title: Optional filter by SENAITE Client name
-        limit: Max number of results to fetch
+        limit: Max number of samples to consider
 
     Returns:
         List of dicts with analysis result data
     """
     try:
-        params = {
+        # 1) Published samples -> {request_id: {subject_identifier, result_date}}
+        ar_params = {
             "portal_type": "AnalysisRequest",
             "review_state": "published",
             "sort_on": "created",
@@ -160,36 +168,59 @@ def fetch_published_results(client_title: str = None, limit: int = 50) -> list:
             "complete": "yes",
         }
         if client_title:
-            params["getClientTitle"] = client_title
+            ar_params["getClientTitle"] = client_title
 
-        response = requests.get(
-            f"{API_BASE}/search",
-            params=params,
-            auth=_auth(),
-            timeout=15,
+        ar_resp = requests.get(
+            f"{API_BASE}/search", params=ar_params, auth=_auth(), timeout=15
         )
-        response.raise_for_status()
+        ar_resp.raise_for_status()
+        ar_items = ar_resp.json().get("items", [])
 
-        data = response.json()
-        items = data.get("items", [])
+        sample_map = {}
+        for ar in ar_items:
+            request_id = ar.get("id", "")
+            if request_id:
+                sample_map[request_id] = {
+                    "subject_identifier": ar.get("ClientSampleID", "") or "",
+                    "result_date": ar.get("DatePublished", ar.get("created", "")),
+                }
+
+        if not sample_map:
+            logger.info("No published samples found in SENAITE.")
+            return []
+
+        # 2) Published analyses (the actual results), joined to the sample above.
+        an_params = {
+            "portal_type": "Analysis",
+            "review_state": "published",
+            "limit": limit * 20,
+            "complete": "yes",
+        }
+        an_resp = requests.get(
+            f"{API_BASE}/search", params=an_params, auth=_auth(), timeout=15
+        )
+        an_resp.raise_for_status()
+        an_items = an_resp.json().get("items", [])
 
         results = []
-        for item in items:
-            # Extract analyses (individual test results) from the sample
-            analyses = item.get("Analyses", [])
-            client_sample_id = item.get("ClientSampleID", "")
-            sample_id = item.get("id", "")
+        for an in an_items:
+            request_id = an.get("getRequestID", "")
+            meta = sample_map.get(request_id)
+            if not meta:
+                continue  # analysis belongs to a sample outside our filter
 
-            for analysis in analyses:
-                if isinstance(analysis, dict):
-                    results.append({
-                        "senaite_sample_id": sample_id,
-                        "subject_identifier": client_sample_id,
-                        "test_name": analysis.get("title", analysis.get("id", "")),
-                        "result_value": str(analysis.get("Result", "")),
-                        "unit": analysis.get("Unit", ""),
-                        "result_date": item.get("DatePublished", item.get("created", "")),
-                    })
+            result_value = an.get("getResult", "")
+            if result_value in (None, ""):
+                continue
+
+            results.append({
+                "senaite_sample_id": request_id,
+                "subject_identifier": meta["subject_identifier"],
+                "test_name": an.get("title", an.get("getKeyword", "")),
+                "result_value": str(result_value),
+                "unit": an.get("getUnit", an.get("Unit", "")),
+                "result_date": meta["result_date"],
+            })
 
         logger.info("Fetched %d results from SENAITE", len(results))
         return results
