@@ -552,20 +552,40 @@ def pull_results_from_senaite(self, study_id=None):
                 continue
 
             # De-duplicate on the SENAITE Analysis UID when available (stable and
-            # unique per result). Fall back to the legacy value-based check only
-            # for older rows that predate provenance tracking.
+            # unique per result — lets a legitimate re-test with the same value
+            # through, unlike a value-based check).
+            if analysis_uid and LabResult.objects.filter(
+                senaite_analysis_uid=analysis_uid
+            ).exists():
+                skipped += 1
+                continue
+
+            # Adopt a legacy row that predates provenance tracking instead of
+            # duplicating it: backfill its UID/sample id (and correct its date)
+            # so historical imports upgrade cleanly on the next pull.
             if analysis_uid:
-                exists = LabResult.objects.filter(
-                    senaite_analysis_uid=analysis_uid
-                ).exists()
-            else:
-                exists = LabResult.objects.filter(
+                legacy = LabResult.objects.filter(
                     subject=subject,
                     test_name=test_name,
                     result_value=result_value,
-                ).exists()
-
-            if exists:
+                    senaite_analysis_uid="",
+                ).first()
+                if legacy:
+                    legacy.senaite_analysis_uid = analysis_uid
+                    legacy.senaite_sample_id = row.get("senaite_sample_id", "")
+                    parsed = parse_senaite_date(row.get("result_date"))
+                    fields = ["senaite_analysis_uid", "senaite_sample_id"]
+                    if parsed:
+                        legacy.result_date = parsed
+                        fields.append("result_date")
+                    legacy.save(update_fields=fields)
+                    skipped += 1
+                    continue
+            elif LabResult.objects.filter(
+                subject=subject,
+                test_name=test_name,
+                result_value=result_value,
+            ).exists():
                 skipped += 1
                 continue
 
