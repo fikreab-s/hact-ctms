@@ -63,6 +63,22 @@ class LabResult(TimeStampedModel):
         blank=True,
         related_name="imported_lab_results",
     )
+    # SENAITE provenance — enables idempotent re-imports (dedupe on analysis UID
+    # rather than value, so a legitimate re-test with the same value is not lost).
+    senaite_sample_id = models.CharField(
+        max_length=100,
+        blank=True,
+        default="",
+        db_index=True,
+        help_text="Source SENAITE AnalysisRequest ID (e.g. 'WS-0001').",
+    )
+    senaite_analysis_uid = models.CharField(
+        max_length=64,
+        blank=True,
+        default="",
+        db_index=True,
+        help_text="Source SENAITE Analysis UID — unique per result, used for de-duplication.",
+    )
 
     class Meta:
         db_table = "lab_results"

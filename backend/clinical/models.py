@@ -73,6 +73,18 @@ class Study(TimeStampedModel):
         ),
     )
 
+    # Integration: SENAITE (LIMS)
+    senaite_client_title = models.CharField(
+        max_length=255,
+        blank=True,
+        default="HACT Clinical Trials",
+        help_text=(
+            "SENAITE Client title this study's samples/results live under. "
+            "Sample push and result pull are scoped to this Client so multiple "
+            "studies/labs can be onboarded independently."
+        ),
+    )
+
     class Meta:
         db_table = "clinical_studies"
         verbose_name = "Study"

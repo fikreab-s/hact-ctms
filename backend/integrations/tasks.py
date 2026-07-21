@@ -438,10 +438,25 @@ def sync_sample_to_senaite(self, sample_id):
     from integrations.senaite import create_sample
 
     try:
-        sample = SampleCollection.objects.select_related("subject").get(id=sample_id)
+        sample = SampleCollection.objects.select_related(
+            "subject", "subject__study"
+        ).get(id=sample_id)
+
+        # Already pushed? Don't create a duplicate AnalysisRequest in SENAITE.
+        if sample.senaite_sample_id:
+            logger.info(
+                "SampleCollection %s already linked to SENAITE %s — skipping push.",
+                sample_id, sample.senaite_sample_id,
+            )
+            return {"status": "skipped", "reason": "already_synced"}
+
+        study = getattr(sample.subject, "study", None)
+        client_title = (
+            getattr(study, "senaite_client_title", "") or "HACT Clinical Trials"
+        )
 
         sample_data = {
-            "client_title": "HACT Clinical Trials",
+            "client_title": client_title,
             "sample_type": sample.sample_type,
             "subject_identifier": sample.subject.subject_identifier,
         }
@@ -479,33 +494,48 @@ def pull_results_from_senaite(self, study_id=None):
     Can be called on-demand or scheduled via Celery Beat.
     """
     from decimal import Decimal, InvalidOperation
+    from django.utils import timezone
     from lab.models import LabResult, ReferenceRange
-    from clinical.models import Subject
+    from clinical.models import Study, Subject
 
-    from integrations.senaite import fetch_published_results
+    from integrations.senaite import fetch_published_results, parse_senaite_date
 
     try:
-        results = fetch_published_results(client_title="HACT Clinical Trials")
+        # Scope the pull to the study's SENAITE Client when a study is given.
+        client_title = "HACT Clinical Trials"
+        if study_id:
+            study = Study.objects.filter(id=study_id).first()
+            if study and study.senaite_client_title:
+                client_title = study.senaite_client_title
+
+        results = fetch_published_results(client_title=client_title)
 
         if not results:
             logger.info("No published results found in SENAITE.")
             return "No results to import."
 
-        # Load reference ranges for flagging
+        # Load reference ranges for flagging. A test can have several ranges
+        # (per gender); since CTMS Subjects carry no demographic sex here, prefer
+        # the gender-agnostic ('all') range for deterministic flagging instead of
+        # letting an arbitrary "last one wins".
         ref_ranges = {}
         rr_qs = ReferenceRange.objects.all()
         if study_id:
             rr_qs = rr_qs.filter(study_id=study_id)
         for rr in rr_qs:
-            ref_ranges[rr.test_name.lower()] = rr
+            key = rr.test_name.lower()
+            existing = ref_ranges.get(key)
+            if existing is None or (existing.gender != "all" and rr.gender == "all"):
+                ref_ranges[key] = rr
 
         imported = 0
         skipped = 0
 
         for row in results:
-            subject_id = row.get("subject_identifier", "").strip()
-            test_name = row.get("test_name", "").strip()
-            result_value = row.get("result_value", "").strip()
+            subject_id = (row.get("subject_identifier") or "").strip()
+            test_name = (row.get("test_name") or "").strip()
+            result_value = (row.get("result_value") or "").strip()
+            analysis_uid = (row.get("senaite_analysis_uid") or "").strip()
 
             if not subject_id or not test_name or not result_value:
                 skipped += 1
@@ -521,12 +551,19 @@ def pull_results_from_senaite(self, study_id=None):
                 skipped += 1
                 continue
 
-            # Skip if already imported (avoid duplicates)
-            exists = LabResult.objects.filter(
-                subject=subject,
-                test_name=test_name,
-                result_value=result_value,
-            ).exists()
+            # De-duplicate on the SENAITE Analysis UID when available (stable and
+            # unique per result). Fall back to the legacy value-based check only
+            # for older rows that predate provenance tracking.
+            if analysis_uid:
+                exists = LabResult.objects.filter(
+                    senaite_analysis_uid=analysis_uid
+                ).exists()
+            else:
+                exists = LabResult.objects.filter(
+                    subject=subject,
+                    test_name=test_name,
+                    result_value=result_value,
+                ).exists()
 
             if exists:
                 skipped += 1
@@ -551,8 +588,8 @@ def pull_results_from_senaite(self, study_id=None):
                 except (InvalidOperation, ValueError):
                     flag = ""
 
-            # Import result
-            from django.utils import timezone
+            # Import result — use the real SENAITE result date when parseable.
+            result_date = parse_senaite_date(row.get("result_date")) or timezone.now().date()
             LabResult.objects.create(
                 subject=subject,
                 test_name=test_name,
@@ -561,7 +598,9 @@ def pull_results_from_senaite(self, study_id=None):
                 reference_range_low=ref_low,
                 reference_range_high=ref_high,
                 flag=flag,
-                result_date=timezone.now().date(),
+                result_date=result_date,
+                senaite_sample_id=row.get("senaite_sample_id", ""),
+                senaite_analysis_uid=analysis_uid,
             )
             imported += 1
 

@@ -50,6 +50,38 @@ def _auth():
     return HTTPBasicAuth(SENAITE_USER, SENAITE_PASSWORD)
 
 
+def parse_senaite_date(value: str):
+    """
+    Parse a SENAITE/Plone date string into a ``date``.
+
+    SENAITE returns values in several shapes depending on the field/version, e.g.
+    ``2026-07-16``, ``2026-07-16 13:55``, ``2026-07-16T13:55:00`` or the odd
+    ``2026-07-16 13:55 PM``. Returns ``None`` if nothing usable is found so the
+    caller can fall back to "today".
+    """
+    from datetime import datetime
+
+    if not value:
+        return None
+    text = str(value).strip()
+    # Drop a stray AM/PM that Plone sometimes appends to a 24h time.
+    for suffix in (" AM", " PM", " am", " pm"):
+        if text.endswith(suffix):
+            text = text[: -len(suffix)].strip()
+    # Normalise the ISO 'T' separator.
+    text = text.replace("T", " ")
+    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d"):
+        try:
+            return datetime.strptime(text[: len(fmt) + 4], fmt).date()
+        except ValueError:
+            continue
+    # Last resort: first 10 chars look like a date?
+    try:
+        return datetime.strptime(text[:10], "%Y-%m-%d").date()
+    except ValueError:
+        return None
+
+
 def check_availability() -> bool:
     """Check if SENAITE API is available and credentials are valid."""
     if not SENAITE_USER or not SENAITE_PASSWORD:
@@ -235,13 +267,22 @@ def fetch_published_results(client_title: str = None, limit: int = 50) -> list:
             if result_value in (None, ""):
                 continue
 
+            # Prefer the per-analysis result-capture date; fall back to the
+            # sample's publish/created date so the CTMS row reflects reality.
+            result_date = (
+                an.get("getResultCaptureDate")
+                or an.get("getDateVerified")
+                or meta["result_date"]
+            )
+
             results.append({
                 "senaite_sample_id": request_id,
+                "senaite_analysis_uid": an.get("uid", ""),
                 "subject_identifier": meta["subject_identifier"],
                 "test_name": an.get("title", an.get("getKeyword", "")),
                 "result_value": str(result_value),
                 "unit": an.get("getUnit", an.get("Unit", "")),
-                "result_date": meta["result_date"],
+                "result_date": result_date,
             })
 
         logger.info("Fetched %d results from SENAITE", len(results))

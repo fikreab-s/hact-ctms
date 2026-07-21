@@ -28,9 +28,13 @@ class LabResultListSerializer(serializers.ModelSerializer):
             "reference_range_low", "reference_range_high",
             "flag", "flag_display",
             "result_date", "imported_at", "imported_by",
+            "senaite_sample_id", "senaite_analysis_uid",
             "created_at", "updated_at",
         ]
-        read_only_fields = ("id", "created_at", "updated_at", "imported_at")
+        read_only_fields = (
+            "id", "created_at", "updated_at", "imported_at",
+            "senaite_sample_id", "senaite_analysis_uid",
+        )
 
     def get_visit_name(self, obj):
         if obj.subject_visit and obj.subject_visit.visit:
