@@ -151,6 +151,12 @@ ERPNEXT_SITE_NAME = os.getenv("ERPNEXT_SITE_NAME", "hact.local")
 SENAITE_URL = os.getenv("SENAITE_URL", "http://senaite:8080")
 SENAITE_API_USER = os.getenv("SENAITE_API_USER", "")
 SENAITE_API_PASSWORD = os.getenv("SENAITE_API_PASSWORD", "")
+# Plone site id SENAITE lives under (public URL is https://.../senaite/...).
+SENAITE_SITE_ID = os.getenv("SENAITE_SITE_ID", "senaite")
+# Shared secret authorizing inbound SENAITE result-published webhooks. Set this
+# in .env and configure SENAITE to send it as the 'X-SENAITE-Token' header so a
+# publish triggers an immediate CTMS pull instead of waiting for the 15-min beat.
+SENAITE_WEBHOOK_SECRET = os.getenv("SENAITE_WEBHOOK_SECRET", "")
 
 DATABASES = {
     "default": {

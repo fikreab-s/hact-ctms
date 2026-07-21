@@ -46,6 +46,7 @@ export const API = {
 
   // ── Integrations ──
   INTEGRATIONS_STATUS: 'integrations/status/',
+  SENAITE_PULL_RESULTS: 'integrations/senaite/pull-results/',
 
   // ── Mobile EDC (standalone CRF data entry) ──
   EDC_SUBJECTS: 'edc/subjects/',

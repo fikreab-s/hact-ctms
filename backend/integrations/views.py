@@ -9,7 +9,7 @@ import logging
 
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 logger = logging.getLogger("hact.integrations.views")
@@ -319,51 +319,105 @@ def erpnext_webhook(request):
     return Response({"status": "ignored", "message": f"Contract status is {contract_status}"})
 
 
+def _senaite_webhook_authorized(request) -> bool:
+    """
+    Authorize an inbound SENAITE webhook.
+
+    SENAITE/Plone calls this server-to-server and has no Keycloak token, so we
+    authenticate with a shared secret sent as ``X-SENAITE-Token`` (or
+    ``?token=``). An already-authenticated CTMS user is also accepted so the
+    endpoint stays usable from the app/tests. If no secret is configured we
+    fall back to requiring authentication (fail closed).
+    """
+    from django.conf import settings as _settings
+
+    secret = getattr(_settings, "SENAITE_WEBHOOK_SECRET", "") or ""
+    if secret:
+        provided = (
+            request.META.get("HTTP_X_SENAITE_TOKEN")
+            or request.query_params.get("token")
+            or ""
+        )
+        if provided and provided == secret:
+            return True
+    return bool(request.user and request.user.is_authenticated)
+
+
 @api_view(["POST"])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def senaite_webhook(request):
     """
-    Webhook endpoint for SENAITE events.
-    Called when lab results are published in SENAITE.
+    Webhook endpoint for SENAITE events — the low-latency alternative to the
+    15-minute Celery poll. When SENAITE publishes a sample it POSTs here and we
+    immediately (a) mark the linked SampleCollection completed and (b) kick off
+    an on-demand results pull, so CTMS reflects the new results within seconds.
+
+    Auth: shared secret via ``X-SENAITE-Token`` header (see SENAITE_WEBHOOK_SECRET)
+    or an authenticated CTMS session.
 
     POST /api/v1/integrations/senaite/webhook/results-published/
     Body:
         {
-            "senaite_sample_id": "SAMP-2026-0001",
+            "senaite_sample_id": "SAMP-2026-0001",   # optional but recommended
             "status": "published"
         }
     """
-    senaite_sample_id = request.data.get("senaite_sample_id")
-    sample_status = request.data.get("status")
-
-    if not senaite_sample_id:
+    if not _senaite_webhook_authorized(request):
         return Response(
-            {"error": "senaite_sample_id is required"},
-            status=status.HTTP_400_BAD_REQUEST,
+            {"error": "Unauthorized — missing or invalid webhook token."},
+            status=status.HTTP_401_UNAUTHORIZED,
         )
 
-    if sample_status == "published":
-        from lab.models import SampleCollection
-        try:
-            sample = SampleCollection.objects.get(senaite_sample_id=senaite_sample_id)
+    senaite_sample_id = request.data.get("senaite_sample_id")
+    sample_status = request.data.get("status", "published")
+
+    if sample_status != "published":
+        return Response(
+            {"status": "ignored", "message": f"Sample status is {sample_status}"}
+        )
+
+    from integrations.tasks import pull_results_from_senaite
+    from lab.models import SampleCollection
+
+    study_id = None
+    sample_marked = False
+
+    # Link + complete the specific sample when we know its id (optional — some
+    # SENAITE setups only send an event ping without the sample id).
+    if senaite_sample_id:
+        sample = (
+            SampleCollection.objects.select_related("subject")
+            .filter(senaite_sample_id=senaite_sample_id)
+            .first()
+        )
+        if sample:
+            study_id = getattr(sample.subject, "study_id", None)
             if sample.status != "completed":
                 sample.status = "completed"
                 sample.save(update_fields=["status"])
-                logger.info(
-                    "Sample %s marked completed via SENAITE results-published webhook.",
-                    senaite_sample_id,
-                )
-            return Response({"status": "success", "message": "Sample marked completed."})
-        except SampleCollection.DoesNotExist:
-            logger.warning(
-                "SENAITE webhook received for unknown sample: %s", senaite_sample_id
+            sample_marked = True
+            logger.info(
+                "Sample %s marked completed via SENAITE results-published webhook.",
+                senaite_sample_id,
             )
-            return Response(
-                {"error": "Sample not found in CTMS"},
-                status=status.HTTP_404_NOT_FOUND,
+        else:
+            logger.warning(
+                "SENAITE webhook for unknown sample %s — still triggering pull.",
+                senaite_sample_id,
             )
 
-    return Response({"status": "ignored", "message": f"Sample status is {sample_status}"})
+    # Trigger the immediate results pull (async on the worker). Scoped to the
+    # sample's study when known, otherwise a global pull.
+    pull_results_from_senaite.delay(study_id=study_id)
+
+    return Response(
+        {
+            "status": "accepted",
+            "sample_marked_completed": sample_marked,
+            "pull_triggered": True,
+            "study_id": study_id,
+        }
+    )
 
 
 @api_view(["POST"])

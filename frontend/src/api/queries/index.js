@@ -171,6 +171,35 @@ export function useImportLabCSV() {
   })
 }
 
+// ── Sample Collections (SENAITE) ──
+export function useSamples(params = {}) {
+  return useQuery({
+    queryKey: ['lab-samples', params],
+    queryFn: () => apiClient.get(API.SAMPLES, { params }).then(r => r.data),
+  })
+}
+
+export function useCreateSample() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data) => apiClient.post(API.SAMPLES, data).then(r => r.data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['lab-samples'] }),
+  })
+}
+
+// Trigger an on-demand SENAITE -> CTMS results pull (also used by the webhook).
+export function useSyncLabResults() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data = {}) =>
+      apiClient.post(API.SENAITE_PULL_RESULTS, data).then(r => r.data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['lab-results'] })
+      qc.invalidateQueries({ queryKey: ['lab-samples'] })
+    },
+  })
+}
+
 // ── Audit Logs ──
 export function useAuditLogs(params = {}) {
   return useQuery({

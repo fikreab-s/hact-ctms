@@ -98,9 +98,13 @@ Key interaction facts:
 4. **Verify** → **Publish** (supervisor). Publishing is what makes results
    visible to CTMS (`review_state == "published"`).
 5. **CTMS pulls** the results:
+   - **instantly via webhook** — when SENAITE publishes, it POSTs to
+     `POST /api/v1/integrations/senaite/webhook/results-published/` and CTMS
+     kicks off an immediate pull (see §4D), *or*
    - automatically every **15 minutes** (Celery beat task
-     `integrations.pull_results_from_senaite`), or
-   - **on demand** via `POST /api/v1/integrations/senaite/pull-results/`.
+     `integrations.pull_results_from_senaite`, kept as a safety-net fallback), *or*
+   - **on demand** via the **Sync from SENAITE** button on `/lab`
+     (`POST /api/v1/integrations/senaite/pull-results/`).
 6. For each published analysis, CTMS:
    - maps `ClientSampleID` → `Subject`,
    - creates a `LabResult` (test name, value, unit, date),
@@ -124,12 +128,47 @@ For labs that email a spreadsheet, CTMS supports bulk import:
 - **Required columns:** `subject_identifier, test_name, result_value, unit, result_date`.
 - Same auto-flagging against reference ranges; rows for unknown subjects are reported as errors.
 
-### 4C. (Designed but not yet wired) push CTMS sample → SENAITE
+### 4C. Push CTMS sample → SENAITE (now wired)
 
-`integrations/senaite.py → create_sample()` and the task
-`integrations.sync_sample_to_senaite` exist to register a CTMS `SampleCollection`
-in SENAITE as an AnalysisRequest. **Today no signal calls it**, so sample
-registration is done directly in the SENAITE UI. See improvements §8.
+A coordinator can register a sample **inside CTMS** instead of re-keying it in
+SENAITE:
+
+- **UI:** `/lab` → **Register Sample** (choose subject, sample type, collection
+  date). Registered samples appear on the **Samples** tab with a live status and
+  their SENAITE ID once linked.
+- **API:** `POST /api/v1/lab/samples/`.
+- **What happens:** a `post_save` signal (`lab/signals.py`) dispatches
+  `integrations.sync_sample_to_senaite`, which calls `create_sample()` to create
+  the AnalysisRequest under the study's SENAITE Client and writes the returned
+  `senaite_sample_id` back onto the `SampleCollection` (guarded so it never
+  double-pushes). The lab then receives/analyses/publishes it in the SENAITE UI,
+  and results flow back per §4A.
+
+### 4D. Results-published webhook (low-latency alternative to polling)
+
+Instead of waiting up to 15 minutes for the beat, SENAITE can notify CTMS the
+moment a sample is published:
+
+- **Endpoint:** `POST /api/v1/integrations/senaite/webhook/results-published/`
+- **Auth:** shared secret in the `X-SENAITE-Token` header, compared against
+  `SENAITE_WEBHOOK_SECRET` (an authenticated CTMS session is also accepted). If
+  no secret is configured the endpoint fails closed (requires auth).
+- **Body:** `{ "senaite_sample_id": "WS-0001", "status": "published" }` — the
+  sample id is optional; a bare `{"status":"published"}` still triggers a pull.
+- **Effect:** marks the linked `SampleCollection` completed *and* dispatches
+  `pull_results_from_senaite` immediately (scoped to that sample's study when
+  known). The 15-min beat remains as a fallback in case a webhook is missed.
+
+**Wiring SENAITE to send it:** Plone/SENAITE has no built-in outbound webhooks,
+so choose one of:
+  1. a **Content Rule** (Site Setup → Content Rules) triggered on the publish
+     transition that calls an external URL (via a small add-on/action), or
+  2. a lightweight **event subscriber** add-on for the `AnalysisRequest`
+     published event that POSTs to the endpoint, or
+  3. have whatever automates publishing (script/integration) also `curl` the
+     webhook with the `X-SENAITE-Token` header.
+Until one of these is configured, the on-demand **Sync** button and the beat
+fallback keep results flowing.
 
 ---
 
@@ -155,6 +194,7 @@ rewrite ^/senaite/(.*) /VirtualHostBase/https/$host:443/senaite/VirtualHostRoot/
 | `SENAITE_SITE_ID` | Plone site id | defaults to `senaite` → API base becomes `.../senaite/@@API/senaite/v1` |
 | `SENAITE_API_USER` | API user | must be a real SENAITE member with lab View/Verify perms |
 | `SENAITE_API_PASSWORD` | API password | **must exactly match** that user's SENAITE password |
+| `SENAITE_WEBHOOK_SECRET` | Shared secret for the inbound results-published webhook | sent by SENAITE as the `X-SENAITE-Token` header; if unset the webhook fails closed |
 
 > ⚠️ **Auth gotcha:** with HTTP Basic auth, a **wrong password does not 401** — Plone
 > silently treats the request as **Anonymous** (still HTTP 200), and Anonymous sees
@@ -174,7 +214,7 @@ rewrite ^/senaite/(.*) /VirtualHostBase/https/$host:443/senaite/VirtualHostRoot/
 
 | Model | Table | Purpose | Key fields |
 |---|---|---|---|
-| `LabResult` | `lab_results` | One imported/entered test result | `subject`, `test_name`, `result_value`, `unit`, `reference_range_low/high`, `flag` (H/L/N), `result_date`, `imported_by` |
+| `LabResult` | `lab_results` | One imported/entered test result | `subject`, `test_name`, `result_value`, `unit`, `reference_range_low/high`, `flag` (H/L/N), `result_date`, `imported_by`, `senaite_sample_id`, `senaite_analysis_uid` |
 | `ReferenceRange` | `lab_reference_ranges` | Per-study normal range for flagging | `study`, `test_name`, `gender`, `age_lower/upper`, `range_low`, `range_high` |
 | `SampleCollection` | `lab_sample_collections` | Sample lifecycle tracking | `subject`, `senaite_sample_id`, `collection_date`, `sample_type`, `status` |
 
@@ -195,61 +235,55 @@ rewrite ^/senaite/(.*) /VirtualHostBase/https/$host:443/senaite/VirtualHostRoot/
 
 ### What works today ✅
 - SENAITE UI lab workflow (setup → sample → results → Receive/Submit/Verify/Publish).
-- Scheduled + on-demand pull of **published** results, correct subject mapping,
-  and H/L/N auto-flagging.
+- **CTMS → SENAITE sample push** on `SampleCollection` creation (Register Sample UI).
+- **Results-published webhook** for instant pulls, with the 15-min beat as fallback.
+- Scheduled + on-demand + webhook pull of **published** results, correct subject
+  mapping, idempotent import (Analysis UID), real result dates, and H/L/N flagging.
+- **Per-study SENAITE Client** (`Study.senaite_client_title`).
 - Manual CSV import path.
 - Health monitoring and an Integrations status dashboard.
 
-### Gaps and hardening opportunities 🔧
+### Is the SENAITE UI "sufficient"? — division of labour
+Yes for the **lab-side** work: receiving, entering results, and Verify/Publish are
+regulated lab actions and belong in SENAITE — do **not** rebuild them in CTMS.
+What *did* belong in CTMS was **sample registration** (the coordinator's action)
+and **result review** — both now covered by the `/lab` Register Sample + Samples
+tab and the results grid, so no double data-entry is needed to start a sample.
 
-1. **Wire up CTMS → SENAITE sample push.** `sync_sample_to_senaite` /
-   `create_sample()` are implemented but never triggered. Add a `post_save`
-   signal on `SampleCollection` (like `clinical/signals.py` does for OpenClinica)
-   so creating a sample in CTMS auto-registers it in SENAITE and stores the
-   returned `senaite_sample_id`. This also makes the existing
-   `results-published` webhook useful (it needs a matching `senaite_sample_id`).
+### Remaining gaps and hardening opportunities 🔧
 
-2. **Prefer a webhook over 15-min polling.** A SENAITE post-publish event that
-   calls CTMS would make results appear instantly and remove the polling lag.
-   The endpoint scaffold exists (`/senaite/webhook/results-published/`) — extend
-   it to trigger `pull_results_from_senaite` for the affected sample.
-
-3. **De-hardcode the Client.** `client_title="HACT Clinical Trials"` is hard-coded
-   in both `create_sample` and the pull. Make it a per-study setting so multiple
-   studies/labs can be onboarded.
-
-4. **Link results to the visit.** `LabResult.subject_visit` is left null on pull.
+1. **Link results to the visit.** `LabResult.subject_visit` is left null on pull.
    Map SENAITE sample metadata (e.g. Client Order / date) to the correct
    `SubjectVisit` so results roll up per visit.
 
-5. **Use full reference-range stratification.** The pull matches only on
-   `test_name` (gender/age columns are ignored, and if several ranges exist per
-   test the "last one wins"). Match on `gender` + `age` for correct flagging.
+2. **Use full reference-range stratification.** The pull now prefers the
+   `gender='all'` range (deterministic), but `gender`/`age` columns are otherwise
+   unused because CTMS `Subject` carries no sex/DOB. Add those demographics to
+   match age/sex-specific ranges precisely.
 
-6. **Stronger duplicate/idempotency key.** Duplicates are detected by
-   `(subject, test_name, result_value)`. A legitimate re-test with the same value,
-   or the same value on a different date, can be dropped or double-counted. Prefer
-   a stable SENAITE analysis UID (store it on `LabResult`) as the idempotency key.
-
-7. **Result-date parsing.** SENAITE returns strings like `2026-07-16 13:55 PM`;
-   the pull currently stamps `result_date = today`. Parse the real
-   `DatePublished`/`getResultCaptureDate` into `result_date`.
-
-8. **Publishing needs SMTP.** In SENAITE, "Publish" is an email-distribution step.
+3. **Publishing needs SMTP.** In SENAITE, "Publish" is an email-distribution step.
    Without a MailHost the email send fails (the sample still transitions to
    published in our environment, but this is fragile). Configure an SMTP relay
    and the Plone/SENAITE "From" address for a clean, auditable publish + report PDF.
 
-9. **Security / least privilege.** Use a **dedicated SENAITE LabManager service
+4. **Security / least privilege.** Use a **dedicated SENAITE LabManager service
    account** (not the shared `admin`) with a strong password stored only in `.env`
    / a secret manager. Rotate credentials; never commit them.
 
-10. **Coding standards for results.** Add LOINC/analysis-code mapping and unit
-    normalization so results are interoperable and comparisons are unit-safe.
+5. **Coding standards for results.** Add LOINC/analysis-code mapping and unit
+   normalization so results are interoperable and comparisons are unit-safe.
 
-11. **Observability.** Surface last-successful-pull time, imported/skipped counts,
-    and auth identity on the Integrations dashboard (the pull endpoint already
-    returns these) so operators can spot silent failures early.
+6. **Observability.** Surface last-successful-pull time, imported/skipped counts,
+   and auth identity on the Integrations dashboard (the pull endpoint already
+   returns these) so operators can spot silent failures early.
+
+7. **Native SENAITE outbound webhook.** We provide the inbound endpoint (§4D);
+   the remaining piece is a SENAITE-side Content Rule / event subscriber so the
+   publish transition actually calls it without manual scripting.
+
+> **Now shipped (previously gaps):** CTMS→SENAITE sample push, inbound
+> results-published webhook + immediate pull, per-study Client, Analysis-UID
+> idempotency, and real result-date parsing.
 
 ---
 
@@ -282,9 +316,11 @@ and the import outcome — the fastest way to tell auth vs. URL vs. mapping issu
 - `GET/POST /api/v1/lab/results/` — list/create lab results (role: `lab_manager`)
 - `POST /api/v1/lab/results/import-csv/` — CSV bulk import
 - `GET/POST /api/v1/lab/reference-ranges/` — reference ranges
-- `GET/POST /api/v1/lab/samples/` — sample-collection tracking
+- `GET/POST /api/v1/lab/samples/` — sample tracking (POST auto-pushes to SENAITE)
 - `POST /api/v1/integrations/senaite/pull-results/` — trigger pull + diagnostics
-- `POST /api/v1/integrations/senaite/webhook/results-published/` — SENAITE event hook
+- `POST /api/v1/integrations/senaite/webhook/results-published/` — SENAITE event
+  hook (auth: `X-SENAITE-Token` = `SENAITE_WEBHOOK_SECRET`); marks sample complete
+  + triggers an immediate pull
 - `GET  /api/v1/integrations/status/` — health of all external systems
 
 **SENAITE (direct)**
