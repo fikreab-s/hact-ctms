@@ -459,6 +459,7 @@ def sync_sample_to_senaite(self, sample_id):
             "client_title": client_title,
             "sample_type": sample.sample_type,
             "subject_identifier": sample.subject.subject_identifier,
+            "date_sampled": str(sample.collection_date) if sample.collection_date else None,
         }
 
         result = create_sample(sample_data)

@@ -113,22 +113,35 @@ def create_sample(sample_data: dict) -> dict:
     """
     Create an AnalysisRequest (sample) in SENAITE.
 
+    Uses the senaite.jsonapi ``/create`` endpoint (``POST /AnalysisRequest`` is
+    *not* allowed and returns a 405 wrapped in a 200 body). The AR is created
+    under the Client folder via ``parent_path`` and needs at least
+    Client + SampleType + DateSampled; we also attach the lab's analysis
+    services so the lab has tests to receive/run.
+
     Args:
         sample_data: dict with keys:
             - client_title: str (SENAITE Client name)
             - sample_type: str (e.g., 'Blood', 'Urine')
-            - contact_name: str (lab contact)
-            - subject_identifier: str (patient/subject ID)
-            - analyses: list of analysis service titles
+            - subject_identifier: str (patient/subject ID -> ClientSampleID)
+            - date_sampled: str 'YYYY-MM-DD' (optional; defaults to today)
+            - contact_name: str (optional lab contact UID)
+            - analyses: list of AnalysisService UIDs/keywords (optional; when
+              omitted, all active services are attached)
 
     Returns:
-        dict with 'success', 'senaite_id', 'url' keys
+        dict with 'success', 'senaite_id', 'uid', 'url' keys
     """
+    from datetime import date
+
     try:
-        # First, find the Client UID
+        # Find the Client (need both UID and path for the create call).
         client_resp = requests.get(
             f"{API_BASE}/Client",
-            params={"title": sample_data.get("client_title", "HACT Clinical Trials")},
+            params={
+                "title": sample_data.get("client_title", "HACT Clinical Trials"),
+                "complete": "yes",
+            },
             auth=_auth(),
             timeout=10,
         )
@@ -140,6 +153,7 @@ def create_sample(sample_data: dict) -> dict:
             return {"success": False, "error": "Client not found in SENAITE"}
 
         client_uid = clients[0].get("uid")
+        client_path = clients[0].get("path")
 
         # Find SampleType UID
         st_resp = requests.get(
@@ -157,36 +171,60 @@ def create_sample(sample_data: dict) -> dict:
 
         sample_type_uid = sample_types[0].get("uid")
 
-        # Create the AnalysisRequest
+        # Analyses: use caller-supplied list, else attach all active services so
+        # the sample is actionable for the lab.
+        analyses = sample_data.get("analyses")
+        if not analyses:
+            svc_resp = requests.get(
+                f"{API_BASE}/AnalysisService",
+                params={"limit": 100},
+                auth=_auth(),
+                timeout=10,
+            )
+            if svc_resp.ok:
+                analyses = [s.get("uid") for s in svc_resp.json().get("items", []) if s.get("uid")]
+
+        # Build the create payload for the jsonapi /create endpoint.
         payload = {
+            "portal_type": "AnalysisRequest",
+            "parent_path": client_path,
             "Client": client_uid,
             "SampleType": sample_type_uid,
+            "DateSampled": sample_data.get("date_sampled") or date.today().isoformat(),
             "ClientSampleID": sample_data.get("subject_identifier", ""),
-            "Contact": sample_data.get("contact_name", ""),
         }
+        if sample_data.get("contact_name"):
+            payload["Contact"] = sample_data["contact_name"]
+        if analyses:
+            payload["Analyses"] = analyses
 
         create_resp = requests.post(
-            f"{API_BASE}/AnalysisRequest",
+            f"{API_BASE}/create",
             json=payload,
             auth=_auth(),
-            timeout=15,
+            timeout=20,
         )
         create_resp.raise_for_status()
 
         result = create_resp.json()
         items = result.get("items", [])
 
-        if items:
-            senaite_id = items[0].get("id", "")
-            logger.info("Sample created in SENAITE: %s", senaite_id)
-            return {
-                "success": True,
-                "senaite_id": senaite_id,
-                "uid": items[0].get("uid", ""),
-                "url": items[0].get("url", ""),
-            }
-        else:
-            return {"success": False, "error": "No items returned from SENAITE"}
+        # jsonapi can answer HTTP 200 with success=false in the body (e.g. a 405
+        # or a validation error) — treat that as a failure.
+        if result.get("success") is False or not items:
+            msg = result.get("message", "No items returned from SENAITE")
+            logger.error("SENAITE AR create failed: %s", msg)
+            return {"success": False, "error": msg}
+
+        item = items[0]
+        senaite_id = item.get("id") or item.get("getId") or item.get("title", "")
+        logger.info("Sample created in SENAITE: %s", senaite_id)
+        return {
+            "success": True,
+            "senaite_id": senaite_id,
+            "uid": item.get("uid", ""),
+            "url": item.get("url", ""),
+        }
 
     except RequestException as e:
         logger.error("Failed to create sample in SENAITE: %s", str(e))
