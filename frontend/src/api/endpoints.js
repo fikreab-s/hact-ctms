@@ -64,6 +64,9 @@ export const API = {
   // ── SAE Expedited Reporting ──
   SAE_TIMELINE: 'safety/sae-timeline/',
   SAE_MARK_REPORTED: 'safety/sae/',  // + {id}/mark-reported/
+
+  // ── UAT feedback (temporary; remove after UAT) ──
+  FEEDBACK: 'feedback/items/',
 }
 
 // Keycloak token endpoint (goes through NGINX proxy → Keycloak:8080)

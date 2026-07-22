@@ -10,6 +10,7 @@ Routes:
     /admin/          → Django admin interface
 """
 
+from django.conf import settings
 from django.contrib import admin
 from django.http import JsonResponse
 from django.urls import include, path
@@ -80,6 +81,10 @@ urlpatterns = [
     # ── Risk-Based Monitoring (ICH E6(R3)) ──
     path("api/v1/monitoring/", include("monitoring.urls")),
 ]
+
+# ── UAT feedback (temporary; gated by feature flag) ──
+if getattr(settings, "UAT_FEEDBACK_ENABLED", False):
+    urlpatterns += [path("api/v1/feedback/", include("feedback.urls"))]
 
 # Customize Django Admin
 admin.site.site_header = "HACT CTMS Administration"

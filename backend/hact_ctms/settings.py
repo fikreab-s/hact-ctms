@@ -82,7 +82,15 @@ HACT_APPS = [
     "outputs.apps.OutputsConfig",
     "audit.apps.AuditConfig",
     "monitoring.apps.MonitoringConfig",
+    # UAT feedback — temporary; remove after User Acceptance Testing. See
+    # backend/feedback/README.md for the full teardown procedure.
+    "feedback.apps.FeedbackConfig",
 ]
+
+# Feature flag: master switch for the in-app UAT feedback widget + API.
+# Set UAT_FEEDBACK_ENABLED=false to disable instantly (routes 404, widget hidden)
+# without removing code. Remove the feature entirely per feedback/README.md.
+UAT_FEEDBACK_ENABLED = env.bool("UAT_FEEDBACK_ENABLED", default=True)
 
 # External system integrations (additive — no existing code modified)
 INTEGRATION_APPS = [
