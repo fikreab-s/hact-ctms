@@ -1,0 +1,18 @@
+[Unit]
+Description=SENAITE -> CTMS results-published notifier (one poll cycle)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/senaite-webhook-notifier.env
+# Adjust the path to wherever you copied notifier.py:
+ExecStart=/usr/bin/python3 /opt/senaite-webhook-notifier/notifier.py
+# Run as an unprivileged user; must own STATE_FILE's directory.
+User=senaite-notifier
+Group=senaite-notifier
+StateDirectory=senaite-webhook-notifier
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
