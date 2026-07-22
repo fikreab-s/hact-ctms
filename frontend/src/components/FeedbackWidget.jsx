@@ -57,7 +57,9 @@ export default function FeedbackWidget() {
   const captureAndOpen = useCallback(async () => {
     setBusy(true)
     try {
-      const { default: html2canvas } = await import('html2canvas')
+      // html2canvas-pro: maintained fork that supports modern CSS color
+      // functions (oklch/lab/color()) emitted by Tailwind v4.
+      const { default: html2canvas } = await import('html2canvas-pro')
       const canvas = await html2canvas(document.body, {
         logging: false,
         useCORS: true,
@@ -69,6 +71,8 @@ export default function FeedbackWidget() {
       setShot(canvas.toDataURL('image/jpeg', 0.8))
     } catch (e) {
       // Screenshot is best-effort — still let the user send text feedback.
+      // eslint-disable-next-line no-console
+      console.error('[FeedbackWidget] screenshot capture failed:', e)
       setShot(null)
       toast('Couldn\u2019t capture a screenshot — you can still send text feedback.')
     } finally {
