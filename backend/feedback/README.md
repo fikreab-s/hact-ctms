@@ -31,7 +31,7 @@ Set both flags and redeploy:
      `frontend/src/layouts/DashboardLayout.jsx` and `frontend/src/layouts/EdcLayout.jsx`.
    - Delete `frontend/src/components/FeedbackWidget.jsx`.
    - Remove the `FEEDBACK` entry from `frontend/src/api/endpoints.js`.
-   - `npm remove html2canvas` (optional — only used here).
+   - `npm remove html2canvas-pro` (optional — only used here).
 2. **Backend**
    - Remove `"feedback.apps.FeedbackConfig"` from `HACT_APPS` and the
      `UAT_FEEDBACK_ENABLED` line in `backend/hact_ctms/settings.py`.
