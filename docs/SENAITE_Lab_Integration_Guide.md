@@ -159,15 +159,17 @@ moment a sample is published:
   `pull_results_from_senaite` immediately (scoped to that sample's study when
   known). The 15-min beat remains as a fallback in case a webhook is missed.
 
-**Wiring SENAITE to send it:** Plone/SENAITE has no built-in outbound webhooks,
-so choose one of:
+**Wiring SENAITE to send it:** Plone/SENAITE has no built-in outbound webhooks.
+A ready-to-deploy **host-side notifier** is shipped for this — see
+`deploy/senaite-webhook-notifier/` (a small Python-stdlib script + systemd
+timer/cron that polls SENAITE for newly-published samples every ~60s and calls
+this webhook with the `X-SENAITE-Token` header). Alternatives if you prefer to
+run inside SENAITE itself:
   1. a **Content Rule** (Site Setup → Content Rules) triggered on the publish
      transition that calls an external URL (via a small add-on/action), or
   2. a lightweight **event subscriber** add-on for the `AnalysisRequest`
-     published event that POSTs to the endpoint, or
-  3. have whatever automates publishing (script/integration) also `curl` the
-     webhook with the `X-SENAITE-Token` header.
-Until one of these is configured, the on-demand **Sync** button and the beat
+     published event that POSTs to the endpoint.
+Until one of these is running, the on-demand **Sync** button and the 15-min beat
 fallback keep results flowing.
 
 ---
@@ -277,9 +279,11 @@ tab and the results grid, so no double data-entry is needed to start a sample.
    and auth identity on the Integrations dashboard (the pull endpoint already
    returns these) so operators can spot silent failures early.
 
-7. **Native SENAITE outbound webhook.** We provide the inbound endpoint (§4D);
-   the remaining piece is a SENAITE-side Content Rule / event subscriber so the
-   publish transition actually calls it without manual scripting.
+7. **Native SENAITE outbound webhook.** We provide the inbound endpoint (§4D)
+   *and* a host-side notifier bridge (`deploy/senaite-webhook-notifier/`) that
+   calls it within ~60s of publishing — no SENAITE code changes needed. A true
+   in-process event subscriber (fires on the publish event itself) remains a
+   possible future refinement.
 
 > **Now shipped (previously gaps):** CTMS→SENAITE sample push, inbound
 > results-published webhook + immediate pull, per-study Client, Analysis-UID

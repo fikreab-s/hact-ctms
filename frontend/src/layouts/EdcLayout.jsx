@@ -11,6 +11,7 @@ import { Outlet, useNavigate } from 'react-router-dom'
 import { HiOutlineCloudUpload, HiOutlineLogout, HiOutlineRefresh, HiOutlineStatusOnline, HiOutlineStatusOffline } from 'react-icons/hi'
 import useAuthStore from '../store/authStore'
 import useEdcStore from '../store/edcOfflineStore'
+import FeedbackWidget from '../components/FeedbackWidget'
 
 export default function EdcLayout() {
   const { user, logout } = useAuthStore()
@@ -104,6 +105,7 @@ export default function EdcLayout() {
           )}
         </div>
       </footer>
+      <FeedbackWidget />
     </div>
   )
 }

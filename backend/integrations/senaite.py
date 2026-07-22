@@ -155,6 +155,33 @@ def create_sample(sample_data: dict) -> dict:
         client_uid = clients[0].get("uid")
         client_path = clients[0].get("path")
 
+        # Resolve a Contact for the AR. SENAITE's publish report template renders
+        # `mailto:${contact/EmailAddress}` and hard-errors if the sample has no
+        # Contact, so we always attach one. Prefer a caller-supplied contact,
+        # else the first Contact under this Client (created during lab setup).
+        contact_uid = sample_data.get("contact_name")
+        if not contact_uid:
+            ct_resp = requests.get(
+                f"{API_BASE}/Contact",
+                params={"path": client_path, "complete": "yes"},
+                auth=_auth(),
+                timeout=10,
+            )
+            if ct_resp.ok:
+                ct_items = ct_resp.json().get("items", [])
+                # Prefer a contact that has an email (required by the report).
+                chosen = next((c for c in ct_items if c.get("EmailAddress")), None) or (
+                    ct_items[0] if ct_items else None
+                )
+                if chosen:
+                    contact_uid = chosen.get("uid")
+                else:
+                    logger.warning(
+                        "SENAITE Client '%s' has no Contact — publish will fail until "
+                        "a Contact with an email is added to the client.",
+                        sample_data.get("client_title"),
+                    )
+
         # Find SampleType UID
         st_resp = requests.get(
             f"{API_BASE}/SampleType",
@@ -193,8 +220,8 @@ def create_sample(sample_data: dict) -> dict:
             "DateSampled": sample_data.get("date_sampled") or date.today().isoformat(),
             "ClientSampleID": sample_data.get("subject_identifier", ""),
         }
-        if sample_data.get("contact_name"):
-            payload["Contact"] = sample_data["contact_name"]
+        if contact_uid:
+            payload["Contact"] = contact_uid
         if analyses:
             payload["Analyses"] = analyses
 

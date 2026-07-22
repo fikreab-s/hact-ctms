@@ -1,0 +1,13 @@
+[Unit]
+Description=Run the SENAITE -> CTMS notifier every minute
+
+[Timer]
+# First run 30s after boot, then every 60s. Persistent=true catches up after downtime.
+OnBootSec=30s
+OnUnitActiveSec=60s
+AccuracySec=5s
+Persistent=true
+Unit=senaite-webhook-notifier.service
+
+[Install]
+WantedBy=timers.target
