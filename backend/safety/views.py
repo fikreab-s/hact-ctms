@@ -9,7 +9,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from core.mixins import AuditCreateMixin
-from core.permissions import IsSafetyOfficer
+from core.permissions import IsMonitoringViewer, IsSafetyOfficer
 
 from .filters import AdverseEventFilter
 from .models import AdverseEvent, CiomsForm, SafetyReview
@@ -121,7 +121,6 @@ class SafetyReviewViewSet(AuditCreateMixin, viewsets.ModelViewSet):
 # ── SAE Expedited Reporting Timeline ──
 
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
 from django.utils import timezone as tz
 
 
@@ -132,7 +131,10 @@ class SaeTimelineView(APIView):
     Filterable by ?status=pending|overdue|on_time
     """
 
-    permission_classes = [IsAuthenticated]
+    # Read-only SAE timeline is surfaced on the monitoring dashboard too, so
+    # allow the same viewer set (monitor, data_manager, safety_officer,
+    # study_admin, admin) rather than every authenticated user.
+    permission_classes = [IsMonitoringViewer]
 
     def get(self, request):
         qs = AdverseEvent.objects.filter(

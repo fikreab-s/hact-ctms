@@ -13,6 +13,8 @@ from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from core.permissions import IsSiteCoordinator
+
 from .edc_serializers import (
     EdcCrfSubmissionSerializer,
     EdcEnrollSubjectSerializer,
@@ -137,7 +139,10 @@ class EdcEnrollSubjectView(generics.CreateAPIView):
     """POST /api/v1/edc/enroll/ — Enroll a new subject."""
 
     serializer_class = EdcEnrollSubjectSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    # Write endpoint: only roles that may enter data (site_coordinator,
+    # data_manager, study_admin, admin) — read-only roles like monitor/
+    # auditor/lab_manager/ops_manager must not be able to enroll subjects.
+    permission_classes = [IsSiteCoordinator]
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -165,7 +170,9 @@ class EdcSubmitCrfView(APIView):
     - Offline UUID deduplication
     """
 
-    permission_classes = [permissions.IsAuthenticated]
+    # Write endpoint: restrict CRF create/edit to data-entry roles
+    # (site_coordinator, data_manager, study_admin, admin).
+    permission_classes = [IsSiteCoordinator]
 
     def post(self, request):
         serializer = EdcCrfSubmissionSerializer(
