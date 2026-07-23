@@ -12,11 +12,13 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
+from core.permissions import IsLabManager, IsStudyAdmin
+
 logger = logging.getLogger("hact.integrations.views")
 
 
 @api_view(["POST"])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsStudyAdmin])
 def upload_document(request):
     """
     Upload a document to the eTMF in Nextcloud.
@@ -242,7 +244,7 @@ def openclinica_diagnostic(request):
 
 
 @api_view(["POST"])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsStudyAdmin])
 def import_openclinica_metadata(request):
     """
     Import CRF metadata (visits, forms, items) from OpenClinica into CTMS.
@@ -421,7 +423,7 @@ def senaite_webhook(request):
 
 
 @api_view(["POST"])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsLabManager])
 def senaite_pull_results(request):
     """
     On-demand trigger for the SENAITE -> CTMS lab-result pull (same logic the

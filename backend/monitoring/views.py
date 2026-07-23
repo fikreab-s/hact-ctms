@@ -13,9 +13,10 @@ from datetime import timedelta
 
 from django.db.models import Avg, Count, F, Q
 from django.utils import timezone
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+from core.permissions import IsMonitoringViewer
 
 from clinical.models import (
     FormInstance, Query, Site, Study, Subject, SubjectVisit,
@@ -38,7 +39,7 @@ class SiteRiskScoresView(APIView):
     Returns color-coded risk levels: low (≥80), medium (50-79), high (<50)
     """
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsMonitoringViewer]
 
     def get(self, request):
         study_id = request.query_params.get("study_id")
@@ -231,7 +232,7 @@ class StudyOverviewView(APIView):
     Returns aggregated study-level risk metrics.
     """
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsMonitoringViewer]
 
     def get(self, request):
         study_id = request.query_params.get("study_id")

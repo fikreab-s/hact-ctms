@@ -128,6 +128,25 @@ class IsOpsManager(BasePermission):
         )
 
 
+class IsMonitoringViewer(BasePermission):
+    """Read-only access to monitoring dashboards & the SAE timeline.
+
+    Matches the frontend /monitoring nav allow-list: monitor, data_manager,
+    safety_officer, study_admin, admin. These endpoints are read-only, so any
+    write attempt is denied.
+    """
+    message = "Monitoring access requires monitor, data manager, safety officer, or study admin role."
+
+    def has_permission(self, request, view):
+        if request.method in ("GET", "HEAD", "OPTIONS"):
+            return _user_has_any_role(
+                request.user,
+                "monitor", "data_manager", "safety_officer",
+                "study_admin", "admin",
+            )
+        return False  # These views are read-only
+
+
 # =============================================================================
 # Composite Permissions — for commonly used combinations
 # =============================================================================
