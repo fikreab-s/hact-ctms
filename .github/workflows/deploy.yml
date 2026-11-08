@@ -1,10 +1,11 @@
-name: Inspect old CTMS deployment for archival
+name: Save old CTMS deployment location privately
 
 "on":
   workflow_dispatch:
 
 permissions:
   contents: read
+  id-token: write
 
 concurrency:
   group: ctms-archive-inventory
@@ -12,7 +13,7 @@ concurrency:
 
 jobs:
   inventory:
-    name: Inspect GCP storage without changing the deployment
+    name: Encrypted location handoff to private storage
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
@@ -22,42 +23,33 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check deployment configuration
+      # The destination bucket has enforced public access prevention and
+      # uniform bucket access. This identity can only create objects there.
+      # No service-account key or public GitHub artifact is used.
+      - name: Authenticate for private upload
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: projects/1048685354986/locations/global/workloadIdentityPools/github-ctms/providers/old-ctms-recovery
+          service_account: ctms-recovery@hact-new-ctms.iam.gserviceaccount.com
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Encrypt deployment location
         shell: bash
         run: |
           set -euo pipefail
           for variable_name in GCP_PROJECT_ID GCP_ZONE VM_INSTANCE; do
-            if [ -z "${!variable_name}" ]; then
-              echo "::error::Missing deployment setting: $variable_name"
-              exit 1
-            fi
+            test -n "${!variable_name}"
           done
+          printf '%s' 'LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQ0lqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FnOEFNSUlDQ2dLQ0FnRUFyQmEzTmZGOXRZblNjMVBSdnYydAprZmVwcy9nWWRoTzZQdGR6bXllVVNkazI4U05kRDUydG5IOS8vS1lzRmxibHpqUXBwMjJTQmxVN0V3UzVZdi9PCitVeWRhTWxkSzQwdmhZSVFjbUh6QmtwbVVvcERRVTNEY2JKZFg2N1g3bEd2ZCtubjE1eEw2ZGliUEltejR0M1oKTWpxL1pDOVM0Qkw1alRiYzE5V1Q0T2p2OTd3V0hOZkRiUWZUNGRyWDBiYXpQaXh4R3phSVN6SkRQWUVlNjF1NAo5bmxVTGx1eW1ueG9ta1BQMEZZOG9UVytUTzNRSWYwYzJNKzJuUlAxRitRd2lDaVpJdmZLTTFEVEZJRWFCajVzCkNJdXNQUVFEZGtaUzVINytjZC9CNW1ISjRuazJaVk1NSWRrL3Y4RVhBUFZlQ0RLaWJqSjRiUmI5a29nYWI0eU0KcWhDSitLby8vRnkyV1FXT2xWb2ZLRkM5alpqZXBKVzRNTFJLWk1xaDZ6MkRZYU9mSDV5WnNsblVtdi8zNkNxVwpGVEljeE8wbFVvQ0hWa3d3OVV6OXZGenFrcm5wTnRidHg5YUFFeERhcVdlT3A4VmhZais0QkJ2cnBwNFZLODl2Cjlrc2p2NFU5REJNUlgvV0pZa05JeFJOUlVaWFFTUkF0Uk9ISVlBMisxRXBlT2FDRm1zUlo0dTdlaSttaC9YZEYKS210bGtEWGlmVXJQaDF5OHBTdUR4Rk8zVE50NG5yNDhzaFV2WEMzSFJaN2Y5WDMvemU3cFF4RE54ZnhkMkZvcQpmbDFnYi9OTmtFdS9RODNZMjcwaFgxM0YyaEhsNkN0VlBqWFBrZGhRbTF3Sjl4dTYrRDdOZWRpck14b1h1eHpJCjdxTmpRWTFhY3NDZVl2UVlKckt0R01VQ0F3RUFBUT09Ci0tLS0tRU5EIFBVQkxJQyBLRVktLS0tLQo=' | base64 --decode > inventory-public.pem
+          python -c 'import json, os; json.dump({k:os.environ[k] for k in ("GCP_PROJECT_ID","GCP_ZONE","VM_INSTANCE")},open("deployment-location.json","w"))'
+          openssl pkeyutl -encrypt -pubin -inkey inventory-public.pem -in deployment-location.json -out deployment-location.enc -pkeyopt rsa_padding_mode:oaep -pkeyopt rsa_oaep_md:sha256
+          rm deployment-location.json
 
-      - name: Authenticate using existing GCP deployment access
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
-
-      - uses: google-github-actions/setup-gcloud@v2
-
-      - name: Inspect old project billing status
-        continue-on-error: true
-        run: gcloud billing projects describe "$GCP_PROJECT_ID" --format="json(billingEnabled,billingAccountName)"
-
-      - name: Inspect old VM and attached disks
-        shell: bash
+      - name: Upload encrypted location to private storage
+        env:
+          INVENTORY_RUN_ID: ${{ github.run_id }}
+          INVENTORY_RUN_ATTEMPT: ${{ github.run_attempt }}
         run: |
           set -euo pipefail
-          gcloud compute instances describe "$VM_INSTANCE" --zone="$GCP_ZONE" --project="$GCP_PROJECT_ID" --format="json(name,status,machineType,disks.source,disks.boot,disks.autoDelete)"
-
-      - name: List existing disk and snapshot metadata
-        continue-on-error: true
-        shell: bash
-        run: |
-          set -euo pipefail
-          gcloud compute disks list --project="$GCP_PROJECT_ID" --format="table(name,zone.basename(),sizeGb,status,users)"
-          gcloud compute snapshots list --project="$GCP_PROJECT_ID" --format="table(name,creationTimestamp,status,sourceDisk)"
-
-      - name: Inspect new project access
-        continue-on-error: true
-        run: gcloud billing projects describe hact-new-ctms --format="json(billingEnabled,billingAccountName)"
+          gcloud storage cp deployment-location.enc "gs://hact-ctms-recovery-1048685354986/inventory/location-${INVENTORY_RUN_ID}-${INVENTORY_RUN_ATTEMPT}.enc" --quiet
