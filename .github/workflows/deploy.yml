@@ -45,16 +45,40 @@ jobs:
           legacy = json.loads(Path(os.environ["LEGACY_CREDENTIAL_FILE"]).read_text())
           data["service_account_email"] = legacy["client_email"]
           token = subprocess.check_output(["gcloud","auth","print-access-token"], text=True).strip()
+          headers = {"Authorization":"Bearer " + token,"Content-Type":"application/json","x-goog-user-project":"hact-new-ctms"}
+          def api(url, payload=None):
+              request = urllib.request.Request(url, data=json.dumps(payload).encode() if payload is not None else None, headers=headers)
+              try:
+                  with urllib.request.urlopen(request, timeout=60) as response:
+                      return response.status, json.load(response)
+              except urllib.error.HTTPError as error:
+                  details = json.loads(error.read()).get("error",{})
+                  reasons = [d.get("reason") for d in details.get("details",[]) if d.get("reason")]
+                  return error.code, {"reason":reasons[0] if reasons else details.get("status","UNKNOWN")}
+          project = urllib.parse.quote(data["GCP_PROJECT_ID"], safe="")
           permissions = ["resourcemanager.projects.get","resourcemanager.projects.getIamPolicy","resourcemanager.projects.setIamPolicy","resourcemanager.projects.createBillingAssignment","resourcemanager.projects.deleteBillingAssignment","billing.resourceAssociations.create","compute.instances.get","compute.instances.start","compute.instances.setMetadata","compute.disks.get"]
-          url = "https://cloudresourcemanager.googleapis.com/v1/projects/" + urllib.parse.quote(data["GCP_PROJECT_ID"], safe="") + ":testIamPermissions"
-          request = urllib.request.Request(url, data=json.dumps({"permissions":permissions}).encode(), method="POST", headers={"Authorization":"Bearer " + token,"Content-Type":"application/json"})
-          try:
-              with urllib.request.urlopen(request, timeout=60) as response:
-                  data["granted_permissions"] = json.load(response).get("permissions",[])
-                  data["permission_check_status"] = response.status
-          except urllib.error.HTTPError as error:
-              data["permission_check_status"] = error.code
-          compressed = zlib.compress(json.dumps(data,separators=(",",":")).encode())
+          status, result = api("https://cloudresourcemanager.googleapis.com/v1/projects/" + project + ":testIamPermissions", {"permissions":permissions})
+          data["permission_check_status"] = status
+          if status == 200:
+              data["granted_permissions"] = result.get("permissions",[])
+          else:
+              data["permission_error_reason"] = result.get("reason")
+          status, result = api("https://cloudbilling.googleapis.com/v1/projects/" + project + "/billingInfo")
+          data["billing_check_status"] = status
+          if status == 200:
+              data["billing_account_name"] = result.get("billingAccountName","")
+              data["billing_enabled"] = result.get("billingEnabled",False)
+          else:
+              data["billing_error_reason"] = result.get("reason")
+          if "resourcemanager.projects.getIamPolicy" in data.get("granted_permissions",[]):
+              status, result = api("https://cloudresourcemanager.googleapis.com/v1/projects/" + project + ":getIamPolicy", {})
+              data["owner_check_status"] = status
+              if status == 200:
+                  data["owner_members"] = [m for b in result.get("bindings",[]) if b.get("role")=="roles/owner" for m in b.get("members",[])][:3]
+          compressed = zlib.compress(json.dumps(data,separators=(",",":")).encode(),9)
+          if len(compressed) > 446:
+              data.pop("owner_members",None)
+              compressed = zlib.compress(json.dumps(data,separators=(",",":")).encode(),9)
           assert len(compressed) <= 446
           Path("recovery-summary.zlib").write_bytes(compressed)
           PY
