@@ -1,119 +1,63 @@
-# =============================================================================
-# HACT CTMS — Deploy to Production
-# Triggers on push to main branch
-# Builds frontend, SSHs into GCP VM, deploys latest code
-# =============================================================================
+name: Inspect old CTMS deployment for archival
 
-name: Deploy to Production
-
-on:
-  push:
-    branches: [main]
-
-  # Allow manual trigger from GitHub UI
+"on":
   workflow_dispatch:
 
-# Prevent concurrent deployments
+permissions:
+  contents: read
+
 concurrency:
-  group: production-deploy
+  group: ctms-archive-inventory
   cancel-in-progress: false
 
 jobs:
-  deploy:
-    name: Deploy to ctms.hacts.org
+  inventory:
+    name: Inspect GCP storage without changing the deployment
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-
+    timeout-minutes: 10
+    env:
+      GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+      GCP_ZONE: ${{ secrets.GCP_ZONE }}
+      VM_INSTANCE: ${{ secrets.VM_INSTANCE }}
     steps:
-      # -----------------------------------------------------------------------
-      # 1. Checkout code
-      # -----------------------------------------------------------------------
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      # -----------------------------------------------------------------------
-      # 2. Build frontend
-      # -----------------------------------------------------------------------
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
+      - name: Check deployment configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          for variable_name in GCP_PROJECT_ID GCP_ZONE VM_INSTANCE; do
+            if [ -z "${!variable_name}" ]; then
+              echo "::error::Missing deployment setting: $variable_name"
+              exit 1
+            fi
+          done
 
-      - name: Install frontend dependencies
-        working-directory: frontend
-        run: npm ci
-
-      - name: Build frontend
-        working-directory: frontend
-        run: npm run build
-
-      # -----------------------------------------------------------------------
-      # 3. Authenticate with Google Cloud
-      # -----------------------------------------------------------------------
-      - name: Authenticate to GCP
+      - name: Authenticate using existing GCP deployment access
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
+      - uses: google-github-actions/setup-gcloud@v2
 
-      # -----------------------------------------------------------------------
-      # 4. Upload frontend build to server
-      # -----------------------------------------------------------------------
-      - name: Tar dist directory
-        run: tar -czf dist.tar.gz -C frontend dist
+      - name: Inspect old project billing status
+        continue-on-error: true
+        run: gcloud billing projects describe "$GCP_PROJECT_ID" --format="json(billingEnabled,billingAccountName)"
 
-      - name: Upload frontend dist archive
+      - name: Inspect old VM and attached disks
+        shell: bash
         run: |
-          gcloud compute scp \
-            dist.tar.gz \
-            fikreab@${{ secrets.VM_INSTANCE }}:/home/fikreab/hact-ctms/frontend/dist.tar.gz \
-            --zone=${{ secrets.GCP_ZONE }} \
-            --project=${{ secrets.GCP_PROJECT_ID }}
+          set -euo pipefail
+          gcloud compute instances describe "$VM_INSTANCE" --zone="$GCP_ZONE" --project="$GCP_PROJECT_ID" --format="json(name,status,machineType,disks.source,disks.boot,disks.autoDelete)"
 
-      # -----------------------------------------------------------------------
-      # 5. Deploy on server
-      # -----------------------------------------------------------------------
-      - name: Deploy latest code
+      - name: List existing disk and snapshot metadata
+        continue-on-error: true
+        shell: bash
         run: |
-          gcloud compute ssh fikreab@${{ secrets.VM_INSTANCE }} \
-            --zone=${{ secrets.GCP_ZONE }} \
-            --project=${{ secrets.GCP_PROJECT_ID }} \
-            --command="
-              cd /home/fikreab/hact-ctms &&
-              echo '=== Pulling latest code ===' &&
-              git pull origin main &&
-              echo '=== Extracting frontend assets ===' &&
-              mkdir -p frontend/dist &&
-              rm -rf frontend/dist/* &&
-              tar -xzf frontend/dist.tar.gz -C frontend/dist --strip-components=1 &&
-              rm -f frontend/dist.tar.gz &&
-              echo '=== Rebuilding Docker images ===' &&
-              sudo docker compose build django-api celery-worker celery-beat &&
-              echo '=== Restarting containers ===' &&
-              sudo docker compose up -d &&
-              echo '=== Collecting static files ===' &&
-              sudo docker compose exec -T django-api python manage.py collectstatic --noinput &&
-              echo '=== Running migrations ===' &&
-              sudo docker compose exec -T django-api python manage.py migrate --noinput &&
-              echo '=== Recreating NGINX (picks up nginx.conf changes) ===' &&
-              sudo docker compose up -d --force-recreate nginx &&
-              echo '=== Deploy complete ==='
-            "
+          set -euo pipefail
+          gcloud compute disks list --project="$GCP_PROJECT_ID" --format="table(name,zone.basename(),sizeGb,status,users)"
+          gcloud compute snapshots list --project="$GCP_PROJECT_ID" --format="table(name,creationTimestamp,status,sourceDisk)"
 
-      # -----------------------------------------------------------------------
-      # 6. Verify deployment
-      # -----------------------------------------------------------------------
-      - name: Health check
-        run: |
-          sleep 10
-          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://ctms.hacts.org/api/health/)
-          echo "Health check status: $HTTP_STATUS"
-          if [ "$HTTP_STATUS" != "200" ]; then
-            echo "::error::Health check failed with status $HTTP_STATUS"
-            exit 1
-          fi
-          echo "✅ Deployment verified — ctms.hacts.org is healthy"
+      - name: Inspect new project access
+        continue-on-error: true
+        run: gcloud billing projects describe hact-new-ctms --format="json(billingEnabled,billingAccountName)"
