@@ -51,5 +51,15 @@ jobs:
           INVENTORY_RUN_ID: ${{ github.run_id }}
           INVENTORY_RUN_ATTEMPT: ${{ github.run_attempt }}
         run: |
-          set -euo pipefail
-          gcloud storage cp deployment-location.enc "gs://hact-ctms-recovery-1048685354986/inventory/location-${INVENTORY_RUN_ID}-${INVENTORY_RUN_ATTEMPT}.enc" --quiet
+          python - <<'PY'
+          import os, subprocess, urllib.request, urllib.parse
+          from pathlib import Path
+          token = subprocess.check_output(["gcloud","auth","print-access-token"], text=True).strip()
+          object_name = "inventory/location-" + os.environ["INVENTORY_RUN_ID"] + "-" + os.environ["INVENTORY_RUN_ATTEMPT"] + ".enc"
+          query = urllib.parse.urlencode({"uploadType":"media","ifGenerationMatch":"0","name":object_name})
+          url = "https://storage.googleapis.com/upload/storage/v1/b/hact-ctms-recovery-1048685354986/o?" + query
+          request = urllib.request.Request(url, data=Path("deployment-location.enc").read_bytes(), method="POST", headers={"Authorization":"Bearer " + token,"Content-Type":"application/octet-stream"})
+          with urllib.request.urlopen(request, timeout=60) as response:
+              assert response.status == 200
+          print("Encrypted deployment location saved in private recovery storage.")
+          PY
