@@ -54,15 +54,16 @@ jobs:
               except urllib.error.HTTPError as error:
                   details = json.loads(error.read()).get("error",{})
                   reasons = [d.get("reason") for d in details.get("details",[]) if d.get("reason")]
-                  return error.code, {"reason":reasons[0] if reasons else details.get("status","UNKNOWN")}
+                  return error.code, {"reason":reasons[0] if reasons else details.get("status","UNKNOWN"),"message":details.get("message","")[:160]}
           project = urllib.parse.quote(data["GCP_PROJECT_ID"], safe="")
-          permissions = ["resourcemanager.projects.get","resourcemanager.projects.getIamPolicy","resourcemanager.projects.setIamPolicy","resourcemanager.projects.createBillingAssignment","resourcemanager.projects.deleteBillingAssignment","billing.resourceAssociations.create","compute.instances.get","compute.instances.start","compute.instances.setMetadata","compute.disks.get"]
+          permissions = ["resourcemanager.projects.get","resourcemanager.projects.getIamPolicy","resourcemanager.projects.setIamPolicy","resourcemanager.projects.createBillingAssignment","resourcemanager.projects.deleteBillingAssignment","compute.instances.get","compute.instances.start","compute.instances.setMetadata","compute.disks.get"]
           status, result = api("https://cloudresourcemanager.googleapis.com/v1/projects/" + project + ":testIamPermissions", {"permissions":permissions})
           data["permission_check_status"] = status
           if status == 200:
               data["granted_permissions"] = result.get("permissions",[])
           else:
               data["permission_error_reason"] = result.get("reason")
+              data["permission_error_message"] = result.get("message","")
           status, result = api("https://cloudbilling.googleapis.com/v1/projects/" + project + "/billingInfo")
           data["billing_check_status"] = status
           if status == 200:
